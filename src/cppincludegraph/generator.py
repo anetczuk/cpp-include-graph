@@ -586,10 +586,10 @@ class GraphBuilder():
         self.nodes_dict[ node_name ] = found_node
         return (found_node, True)
 
-    def addTree(self, package_node: GraphNode):
+    def addTree(self, package_node: GraphNode, reduce_dirs=None):
         _LOGGER.info( "getting children list from %s", package_node.data.name )
 
-        ignore_list = None
+        ignore_list = reduce_dirs
 #         ignore_list = [ "/usr", "/opt" ]
         raw_children = get_flat_list_breadth( [package_node], ignore_children=ignore_list )
 
@@ -616,20 +616,20 @@ class GraphBuilder():
                 existing_parent.addChild( new_node )
 
 
-def read_build_dir( log_dir, files_info_dict=None ) -> List[ GraphNode ]:
-    if files_info_dict is None:
-        files_info_dict = {}
-    log_files_list = []
-    for root, dirs, fnames in os.walk( log_dir ):
-        for fname in fnames:
-            if fname != "build.make.log":
-                continue
-            log_path = os.path.join( root, fname )
-            log_files_list.append( log_path )
-    return read_build_logs( log_files_list, files_info_dict )
+# def read_build_dir( log_dir, files_info_dict=None ) -> List[ GraphNode ]:
+#     if files_info_dict is None:
+#         files_info_dict = {}
+#     log_files_list = []
+#     for root, dirs, fnames in os.walk( log_dir ):
+#         for fname in fnames:
+#             if fname != "build.make.log":
+#                 continue
+#             log_path = os.path.join( root, fname )
+#             log_files_list.append( log_path )
+#     return read_build_logs( log_files_list, files_info_dict )
 
 
-def read_build_logs( log_files_list, files_info_dict=None ) -> List[ GraphNode ]:
+def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None ) -> List[ GraphNode ]:
     if files_info_dict is None:
         files_info_dict = {}
 #     raw_tree: List[ GraphNode ] = []
@@ -650,7 +650,7 @@ def read_build_logs( log_files_list, files_info_dict=None ) -> List[ GraphNode ]
         package_node.addChildren( module_tree_list )
 #         raw_tree.append( package_node )
 
-        graph_builder.addTree( package_node )
+        graph_builder.addTree( package_node, reduce_dirs )
 
     return graph_builder.build_list
 
@@ -842,6 +842,9 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
     graph: Graph = generate_dot_graph2( build_tree, package_nodes, output_dir )
     store_dot_graph( graph, output_dir )
 
+    out_png = os.path.join( output_dir, "include_tree.gv.png" )
+    graph.writePNG( out_png )
+
     include_counter = count_packages_includes( package_nodes )
     included_list   = get_includes_list( build_tree, object_files_names, include_counter )
 
@@ -1014,8 +1017,8 @@ def main():
 
     parser.add_argument( '-lf', '--log_files', nargs='+', action='store', required=False, default="",
                          help="List of build log files" )
-#     parser.add_argument( '-d', '--dir', action='store', required=False, default="",
-#                          help="Directory to search for 'build.make.log' files" )
+    parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
+                         help="List of headers directories to reduce" )
     parser.add_argument( '--file_info', action='store', required=False, default="",
                          help="Files information" )
     parser.add_argument( '--outdir', action='store', required=False, default="", help="Output HTML" )
@@ -1030,7 +1033,7 @@ def main():
 
     _LOGGER.info( "reading build logs: %s", args.log_files )
     files_info_dict = read_files_info( args.file_info )
-    graph_list: List[ GraphNode ] = read_build_logs( args.log_files, files_info_dict )
+    graph_list: List[ GraphNode ] = read_build_logs( args.log_files, files_info_dict, args.reduce_dirs )
 
     _LOGGER.info( "building include graph" )
     build_tree: IncludeGraph = IncludeGraph( graph_list )
