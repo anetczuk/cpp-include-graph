@@ -1,0 +1,304 @@
+#*
+#* Python is accessible by following methods:
+#* - $variable -- printing value of variable to document
+#* - ${ <expression> } -- single expression to evaluate and print to document
+#* - #! -- general purpose line of any Python code
+#* 
+#* Any non-python content and non-template content is treated as text. 
+#* 
+
+
+#import os as os
+#import showgraph.datadict as data_dict
+
+
+#template main( INPUT_DICT )
+#!
+#! DATA_DICT = data_dict.DataDict( INPUT_DICT )
+#!
+<html>
+<head>
+<!--
+File was automatically generated using 'ros-diagram-tools' project.
+Project is distributed under the BSD 3-Clause license.
+-->
+    <title>include graph</title>
+    <style>
+        body {  padding: 24;
+                background-color: ${DATA_DICT.get('body_color', '')};
+             }
+
+        pre {  background-color: rgb(226, 226, 226);
+               margin: 0px;
+               margin-top: 24px;
+               padding: 16px;
+            }
+
+        pre code {  margin: 0px;
+                    padding: 0px;
+                 }
+
+        th { text-align: left; }
+
+        th, td { padding: 0 10px; }
+
+        .alternate tr:nth-child(even) { background: #C6C6C6 }
+        .alternate tr:nth-child(odd)  { background: #B0B0B0 }
+
+        .footer { margin-top:48px;
+                  width: 100%;
+                  margin-right: auto; margin-left: auto;
+                  text-align: center;
+                  font-size: 12px;
+                  color: #444444;
+                }
+
+        .center_content {  width: 100%;
+                           margin-right: auto; margin-left: auto;
+                           text-align: center;
+                           padding-top: 24; padding-bottom: 24;
+                        }
+
+        .info_content { margin-bottom: 36; }
+#! ## ${DATA_DICT.get('head_css_style', '')}
+    </style>
+</head>
+
+<body>
+    <div class="info_content">
+#!
+#! root_dir = DATA_DICT.getOptional('root_dir', "")
+#!
+#! main_page_link = DATA_DICT.getOptional('main_page_link')
+#{ if main_page_link:
+        <a href="${main_page_link}">back to Main graph</a>
+#}
+#{     else:
+        Main graph
+#}
+        <br />
+    </div>
+
+#!
+#! item_data = DATA_DICT.get('item_data')
+#! item_type = "ROOT"
+#{ if item_data:
+#!     item_type = item_data.getTypeName()
+    <div class="info_content">
+        <div><span style="font-weight: bold;">${item_data.name}</span></div>
+        <br />
+        <table>
+            <tr>
+                <td>Type:</td>
+                <td>${ item_type }</td>
+            </tr>
+#{ if item_type != "PACKAGE":
+            <tr>
+                <td>File size:</td>
+                <td>${print_size_kb( item_data.fsize )} kB</td>
+            </tr>
+#}
+#{ if item_type == "HEADER":
+            <tr>
+                <td>Size with includes:</td>
+                <td>${print_size_kb( item_data.ai_size )} kB</td>
+            </tr>
+#}
+        </table>
+    </div>
+#}
+
+    <div class="center_content">
+#!
+#! svg_embed_content = DATA_DICT.get('svg_embed_content', None)
+#{ if svg_embed_content:
+    ${svg_embed_content}
+#}
+#{ else:
+        <object type="image/svg+xml" data="${DATA_DICT.get('svg_name')}">missing image</object>
+#}
+    </div>
+
+#{ if item_data:
+#{     if item_type == "HEADER":
+#! objects_list = list( item_data.all_obj_files )
+#! objects_list.sort( key=lambda item: item.data.name, reverse=False )
+${ generate_object_files_list( objects_list, "(sorted by name)" ) }
+#!
+#! objects_list = list( item_data.all_obj_files )
+#! objects_list.sort( key=lambda item: item.data.fsize, reverse=True )
+${ generate_object_files_list( objects_list, "(sorted by size)" ) }
+#!
+#}
+#}
+
+#!
+#! children_list = DATA_DICT.getOptional('children_list', None)
+#{ if children_list:
+#!
+#! children_list.sort( key=lambda item: item.data.name, reverse=False )
+${ generate_children_list( item_type, children_list, "(sorted by name)" ) }
+#!
+#! children_list.sort( key=lambda item: item.data.ai_size, reverse=True )
+${ generate_children_list( item_type, children_list, "(sorted by size)" ) }
+#!
+#}
+
+    
+#!
+#! included_list = DATA_DICT.get('included_list')
+#{ if included_list:
+#!
+#! included_list.sort( key=lambda item: item[0].name, reverse=True )
+    <div class="info_content">
+        <span style="font-weight: bold;">All included headers (sorted by name):</span>
+${ generate_include_table( included_list ) }
+    </div>
+#!
+#! included_list.sort( key=lambda item: (item[1], item[0].name), reverse=True )
+    <div class="info_content">
+        <span style="font-weight: bold;">All included headers (sorted by number of object files):</span>
+${ generate_include_table( included_list ) }
+    </div>
+#!
+#! included_list.sort( key=lambda item: (item[2], item[0].name), reverse=True )
+    <div class="info_content">
+        <span style="font-weight: bold;">All included headers (sorted by total size):</span>
+${ generate_include_table( included_list ) }
+    </div>
+#}
+
+    <div class="footer">
+        File was automatically generated using <i>ros-diagram-tools</i> project.
+        Project is distributed under the BSD 3-Clause license.
+    </div>
+</body>
+</html>
+#end template
+
+
+#*******************************************************
+
+
+#template generate_children_list( item_type, children_list, list_subtitle )
+#!
+#! list_title = "Children list"
+#{ if item_type == "ROOT":
+#!     list_title = "Packages"
+    <div class="info_content">
+        <span style="font-weight: bold;">${ list_title } ${list_subtitle}:</span>
+        <table class="alternate">
+            <tr>
+                <th>File:</th>
+                <th>Object files size [kB]:</th>
+            </tr>
+#{ for item in children_list:
+#!     item_data = item.data
+            <tr>
+                <td><code><a href="${item_data.href}">${item_data.name}</a></code></td>
+                <td>${print_size_kb( item_data.dc_size )}</td>
+            </tr>
+#}
+        </table>
+    </div>
+#}
+
+#{ if item_type == "PACKAGE":
+${ generate_object_files_list( children_list, list_subtitle ) }
+#}
+
+#{ if item_type == "OBJ_FILE":
+#!     list_title = "Direct includes"
+    <div class="info_content">
+        <span style="font-weight: bold;">${ list_title } ${list_subtitle}:</span>
+        <table class="alternate">
+            <tr>
+                <th>File:</th>
+                <th>File size [kB]:</th>
+                <th>Size with includes [kB]:</th>
+            </tr>
+#{ for item in children_list:
+#!     item_data = item.data
+            <tr>
+                <td><code><a href="${item_data.href}">${item_data.name}</a></code></td>
+                <td>${print_size_kb( item_data.fsize )}</td>
+                <td>${print_size_kb( item_data.ai_size )}</td>
+            </tr>
+#}
+        </table>
+    </div>
+#}
+#{ if item_type == "HEADER":
+#!     list_title = "Direct includes"
+    <div class="info_content">
+        <span style="font-weight: bold;">${ list_title } ${list_subtitle}:</span>
+        <table class="alternate">
+            <tr>
+                <th>File:</th>
+                <th>File size [kB]:</th>
+                <th>Size with includes [kB]:</th>
+            </tr>
+#{ for item in children_list:
+#!     item_data = item.data
+            <tr>
+                <td><code><a href="${item_data.href}">${item_data.name}</a></code></td>
+                <td>${print_size_kb( item_data.fsize )}</td>
+                <td>${print_size_kb( item_data.ai_size )}</td>
+            </tr>
+#}
+        </table>
+    </div>
+#}
+#!
+#end template
+
+
+#template generate_object_files_list( object_files_list, list_subtitle )
+    <div class="info_content">
+        <span style="font-weight: bold;">Object files ${list_subtitle}:</span>
+        <table class="alternate">
+            <tr>
+                <th>File:</th>
+                <th>File size [kB]:</th>
+            </tr>
+#{ for item in object_files_list:
+#!     item_data = item.data
+            <tr>
+                <td><code><a href="${item_data.href}">${item_data.name}</a></code></td>
+                <td>${print_size_kb( item_data.fsize )}</td>
+            </tr>
+#}
+        </table>
+    </div>
+#end template
+
+
+#template generate_include_table( included_list )
+        <table class="alternate">
+            <tr>
+                <th>File:</th>
+                <th>Object files:</th>
+                <th>File size [kB]:</th>
+                <th>Size with includes [kB]:</th>
+                <th>Total size [kB]:</th>
+            </tr>
+#! total_inclusions = 0
+#{ for item in included_list:
+#!     item_data = item[0]
+#!     total_inclusions += item[1]
+            <tr>
+                <td><code><a href="${item_data.href}">${item_data.name}</a></code></td>
+                <td>${item[1]}</td>
+                <td>${ print_size_kb(item_data.fsize) }</td>
+                <td>${ print_size_kb(item_data.ai_size) }</td>
+                <td>${ item[2] }</td>
+            </tr>
+#}
+        </table>
+        Total inclusions: ${total_inclusions}
+#end template
+
+
+#template print_size_kb( f_size )
+${ round( f_size / 1024, 2) }
+#end template

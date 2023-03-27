@@ -1,1 +1,3 @@
-## nothing for now
+##
+texthon
+git+https://github.com/anetczuk/showgraph-py#subdirectory=src
