@@ -22,7 +22,6 @@ class GraphTest(unittest.TestCase):
         ## Called after testfunction was executed
         pass
 
-    def test_addNodeObject(self):
-        print( "aaaa1", sys.prefix )
-        print( "aaaa2", EDGE_COLORS_PATH )
-        self.assertEqual( "aaa", EDGE_COLORS_LIST )
+    def test_edge_colors_list(self):
+        """Test is dependency project is installed successfully with data."""
+        self.assertGreater( len(EDGE_COLORS_LIST), 0 )
