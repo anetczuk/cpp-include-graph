@@ -878,6 +878,7 @@ def count_packages_includes( package_nodes_list: List[GraphNode] ):
 def generate_html_page( output_dir, page_params ):
     svg_path    = os.path.join( output_dir, "include_tree.gv.svg" )
     svg_content = read_file( svg_path )
+    os.remove( svg_path )                   ## remove file -- content embedded into HTML
 
     ## prepare input for template
     page_params.update( { "body_color":   "#bbbbbb",
