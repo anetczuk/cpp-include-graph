@@ -7,10 +7,7 @@
 
 import unittest
 
-from showgraph.graphviz import Graph, EDGE_COLORS_PATH, EDGE_COLORS_LIST
-
-import sys
-import pydotplus
+from showgraph.graphviz import EDGE_COLORS_LIST
 
 
 class GraphTest(unittest.TestCase):

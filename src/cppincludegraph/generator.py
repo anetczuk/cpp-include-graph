@@ -9,21 +9,13 @@ import os
 import logging
 import argparse
 import re
-import hashlib
-import pprint
-import pickle
-from typing import List, Set, Dict, Any
+from typing import List, Set, Dict, Any, Iterable, Tuple
 from enum import Enum, unique
 import collections
-import copy
 
-from dataclasses import dataclass, field
+from showgraph.io import read_file, prepare_filesystem_name, read_list
+from showgraph.graphviz import Graph, set_node_style
 
-from PIL import Image, ImageDraw
-
-from showgraph.io import read_file, write_file, prepare_filesystem_name,\
-    read_list
-from showgraph.graphviz import Graph, set_node_style, preserve_neighbour_nodes
 from cppincludegraph import texttemplate
 
 
@@ -46,7 +38,7 @@ class NodeData():
 
     def __init__(self):
         self.name: str       = None
-        self.type: NodeType  = None
+        self.type: NodeData.NodeType = None
         self.fsize: int      = 0            ## file size
         self.dc_size: int    = 0            ## size of direct children
         self.ai_size: int    = 0            ## size with all includes
@@ -70,12 +62,12 @@ class NodeData():
 
 ##
 class GraphNode():
-    
+
     def __init__(self):
         self.data: NodeData                = NodeData()
         self.parents: Set[ 'GraphNode' ]   = set()
         self.children: List[ 'GraphNode' ] = []
-    
+
     def addChild(self, child: 'GraphNode' ):
         self.children.append( child )
         child.parents.add( self )
@@ -92,7 +84,7 @@ class GraphNode():
 
     def removeParent(self, parent):
         self.parents.remove( parent )
-    
+
     def removeFromTree(self):
         for parent in self.parents:
             parent.removeChild( self )
@@ -102,8 +94,7 @@ class GraphNode():
     def getFlatList(self, include_self=True) -> List[ 'GraphNode' ]:
         if include_self:
             return get_flat_list_breadth( [self] )
-        else:
-            return get_flat_list_breadth( self.children )
+        return get_flat_list_breadth( self.children )
 
     def chopChildren(self, node_prefix):
         name = self.data.name
@@ -131,7 +122,7 @@ class GraphNode():
 
 # ##
 # class IncludeItem():
-# 
+#
 #     def __init__( self, node: GraphNode=None ):
 #         self.parents: Set[ str ]  = set()
 #         self.children: Set[ str ] = set()
@@ -141,16 +132,16 @@ class GraphNode():
 #             self.children = get_names( node.children )
 #             self.data     = copy.copy( node.data )
 #             self.data.all_children.clear()
-# 
-# 
+#
+#
 # ##
 # class IncludeGraphState():
-# 
+#
 #     def __init__(self, root_list: List[ GraphNode ]=[]):
 # #         self.all_items: List[ IncludeItem ]  = []
 #         self.root_items: List[ IncludeItem ] = []
 #         self.items_dict = {}
-# 
+#
 #         all_nodes = get_flat_list_breadth( root_list )
 #         for node in all_nodes:
 #             node_item = IncludeItem(node)
@@ -158,16 +149,16 @@ class GraphNode():
 #             if len(node_item.parents) < 1:
 #                 self.root_items.append( node_item )
 #             self.items_dict[ node_item.data.name ] = node_item
-# 
+#
 #     def generateGraph(self) -> 'IncludeGraph':
 #         nodes_tree = self.generateTree()
 #         return IncludeGraph( nodes_tree )
-# 
+#
 #     def generateTree(self):
 #         item_names = [ item.data.name for item in self.root_items ]
 #         nodes_dict = {}
 #         return self.generateNodesTreeFromList( item_names, nodes_dict )
-# 
+#
 #     def generateNodesTreeFromList(self, items_list: List[str], nodes_dict) -> List[ GraphNode ]:
 #         ret_list = []
 #         for item_name in items_list:
@@ -175,7 +166,7 @@ class GraphNode():
 #             node = self.generateNodeTreeFromItem( item, nodes_dict )
 #             ret_list.append( node )
 #         return ret_list
-# 
+#
 #     def generateNodeTreeFromItem(self, item: IncludeItem, nodes_dict) -> GraphNode:
 #         item_name = item.data.name
 #         node = nodes_dict.get( item_name, None )
@@ -187,19 +178,21 @@ class GraphNode():
 #         node.parents  = self.generateNodesTreeFromList( item.parents, nodes_dict )
 #         node.children = self.generateNodesTreeFromList( item.children, nodes_dict )
 #         return node
-    
+
 
 ##
 class IncludeGraph():
 
-    def __init__(self, packages_list: List[ GraphNode ]=[]):
+    def __init__(self, packages_list: List[ GraphNode ] = None):
+        if packages_list is None:
+            packages_list = []
         self.root: GraphNode = GraphNode()
         self.root.data.name = "root"
         self.root.addChildren( packages_list )
 
         self.nodes_dict = {}
 
-#         self._updateNames()        
+#         self._updateNames()
         self._calculateDirs()
         self._calculateChildren()
         self._calculateObjFiles()
@@ -221,7 +214,7 @@ class IncludeGraph():
             pkg_subdir          = prepare_filesystem_name( package.data.name )
             package.data.subdir = pkg_subdir
             package.data.href   = os.path.join( pkg_subdir, "item.html" )
-            
+
             all_children = package.getFlatList( False )
             for child in all_children:
                 child_subdir = prepare_filesystem_name( child.data.name )
@@ -284,7 +277,7 @@ class IncludeGraph():
         nodes_list = self.getNodes( names_list )
         return self.getConnectedNodes( nodes_list )
 
-    def getConnectedNodes(self, nodes_list: List[ GraphNode ]) -> List[ GraphNode ]:
+    def getConnectedNodes(self, nodes_list: List[ GraphNode ]) -> Set[ GraphNode ]:
         ret_list: Set[ GraphNode ] = set()
         for node in nodes_list:
             ret_list.add( node )
@@ -302,13 +295,13 @@ class IncludeGraph():
         return ret_list
 
     def findMaxIncludeChildrenPath(self, start_nodes_list: List[ GraphNode ]) -> Set[ GraphNode ]:
-        ret_list = []
+        ret_list: List[GraphNode] = []
         ret_list.extend( start_nodes_list )
         i = 0
         while i < len(ret_list):
-            node = ret_list[i]
+            node: GraphNode = ret_list[i]
             i += 1
-            next_node = max_include_node_from_list( node.children )
+            next_node: GraphNode = max_include_node_from_list( node.children )
             if next_node in ret_list:
                 continue
             if next_node:
@@ -333,7 +326,7 @@ class IncludeGraph():
 # #         names_list = get_names( nodes_list )
 # #         nodes_list = self.getNodes( names_list )
 #         connected = self.getConnectedNodes( nodes_list )
-# 
+#
 #         for child in self.root.data.all_children:
 #             if child in connected:
 #                 continue
@@ -342,23 +335,23 @@ class IncludeGraph():
 #             if item in connected:
 #                 continue
 #             self.root.children.remove( item )
-# 
+#
 # #         names_list = get_names( nodes_list )
 # #         build_tree.preserveNodesByName( names_list )
 # #         build_tree = IncludeGraph( build_tree.nodes )
-# 
+#
 #         return None
 
 
 def get_parent_obj_files( node: GraphNode ):
     if node.data.all_obj_files:
         return node.data.all_obj_files
-    ret_set = set()
-    watch_list = []
+    ret_set: Set[GraphNode] = set()
+    watch_list: List[GraphNode] = []
     watch_list.extend( node.parents )
     i = 0
     while i < len(watch_list):
-        parent = watch_list[i]
+        parent: GraphNode = watch_list[i]
         i += 1
         if parent.data.all_obj_files:
             ret_set.update( parent.data.all_obj_files )
@@ -372,7 +365,7 @@ def get_parent_obj_files( node: GraphNode ):
     return ret_set
 
 
-def max_include_node_from_list( nodes_list: List[GraphNode] ) -> GraphNode:
+def max_include_node_from_list( nodes_list: Iterable[GraphNode] ) -> GraphNode:
     max_value = -1
     max_node  = None
     for node in nodes_list:
@@ -382,12 +375,13 @@ def max_include_node_from_list( nodes_list: List[GraphNode] ) -> GraphNode:
     return max_node
 
 
-def get_names( nodes_list: List[ GraphNode ] ):
+def get_names( nodes_list: Iterable[ GraphNode ] ):
     return [ item.data.name for item in nodes_list ]
 
 
 ##
-def get_flat_list_breadth( nodes_list: List['GraphNode'], ignore_nodes: List[str]=None, ignore_children: List[str]=None ) -> List[ 'GraphNode' ]:
+def get_flat_list_breadth( nodes_list: List['GraphNode'], ignore_nodes: List[str] = None,
+                           ignore_children: List[str] = None ) -> List[ 'GraphNode' ]:
     ## breadth first order
     ret_list = []
     ret_list.extend( nodes_list )
@@ -455,7 +449,7 @@ def calculate_children( node: GraphNode ) -> List[ GraphNode ]:
 
 
 def calculate_parents( node: GraphNode ) -> List[ GraphNode ]:
-    ret_list = []
+    ret_list: List[GraphNode] = []
     ret_list.extend( node.parents )
     i = 0
     while i < len(ret_list):
@@ -469,11 +463,12 @@ def calculate_parents( node: GraphNode ) -> List[ GraphNode ]:
 
 def calculate_all_children( node: GraphNode ):
     ## depth first order
-    ret_list = set()
+    ret_list: Set[GraphNode] = set()
+    ## child: GraphNode
     for child in node.children:
         child_data = child.data
         if child_data.all_children is None:
-            child_data.all_children = []                                     ## mark as under calculation
+            child_data.all_children = set()            ## mark as under calculation
             calculate_all_children( child )
         ret_list.update( child_data.all_children )
         ret_list.add( child )
@@ -482,7 +477,7 @@ def calculate_all_children( node: GraphNode ):
 
 def count_includes( children_list: List[ GraphNode ] ):
     ## depth first order
-    ret_count = collections.Counter()
+    ret_count: collections.Counter = collections.Counter()
     for child in children_list:
         names = get_names( child.data.all_children )
         ret_count.update( names )
@@ -492,16 +487,18 @@ def count_includes( children_list: List[ GraphNode ] ):
 
 def print_graph( nodes_list: List[ GraphNode ], indent=0 ):
     progres_list = []
-    for node in nodes_list:
-        progres_list.append( (node, indent) )
+    ## item: GraphNode
+    for item in nodes_list:
+        progres_list.append( (item, indent) )
     progres_list.reverse()
-    visited_set = set()
+    visited_set: Set[GraphNode] = set()
     while len( progres_list ) > 0:
         data = progres_list.pop(-1)
-        node = data[0]
+        node: GraphNode = data[0]
 
         if node in visited_set:
-            print( " " * data[1], node.data.name, "(recurrent)", "parents:", len(node.parents), "children:", len(node.children) )
+            print( " " * data[1], node.data.name, "(recurrent)", "parents:",
+                   len(node.parents), "children:", len(node.children) )
             continue
 
         visited_set.add( node )
@@ -515,9 +512,10 @@ def print_graph( nodes_list: List[ GraphNode ], indent=0 ):
 
 
 def print_stats( build_tree: IncludeGraph, out_path ):
-    include_counter = collections.Counter()
+    include_counter: collections.Counter = collections.Counter()
 
-    for tree_item in build_tree.nodes:
+    ## tree_item: GraphNode
+    for tree_item in build_tree.root.children:
 #         tree_item.chopNodes( "/usr" )
 #         tree_item.chopNodes( "/opt" )
 
@@ -525,7 +523,7 @@ def print_stats( build_tree: IncludeGraph, out_path ):
         for tree_node in all_children:
             name = tree_node.data.name
             include_counter[ name ] += 1
-    
+
     print( "Total headers found:", len(include_counter) )
     common = include_counter.most_common(50)
 
@@ -541,13 +539,15 @@ def print_stats( build_tree: IncludeGraph, out_path ):
 
 
 class GraphBuilder():
-     
-    def __init__(self, files_info_dict={}):
+
+    def __init__(self, files_info_dict=None):
         self.files_info_dict = files_info_dict
+        if self.files_info_dict is None:
+            self.files_info_dict = {}
         self.nodes_dict      = {}
         self.build_list      = []
- 
-    def getNode(self, node: GraphNode) -> GraphNode:
+
+    def getNode(self, node: GraphNode) -> Tuple[GraphNode, bool]:
         file_info = self.getInfo( node.data )
         item_name = file_info[0]
         file_size = file_info[1]
@@ -577,7 +577,7 @@ class GraphBuilder():
         _LOGGER.warning( "unable to get data for file: %s", item_name )
         return (item_name, 0)
 
-    def _getNodeFromDict(self, node_name) -> GraphNode:    
+    def _getNodeFromDict(self, node_name) -> Tuple[GraphNode, bool]:
         found_node = self.nodes_dict.get( node_name, None )
         if found_node:
             return (found_node, False)
@@ -603,7 +603,7 @@ class GraphBuilder():
     #             print( "adding package:", new_node.data.name )
                 self.build_list.append( new_node )
                 continue
-    
+
             for child_parent in child.parents:
                 existing_parent_data = self.getNode( child_parent )
                 if existing_parent_data[1] is True:
@@ -614,9 +614,11 @@ class GraphBuilder():
                     continue
     #             print( f"adding: {existing_parent.data.name} -> {new_node.data.name}" )
                 existing_parent.addChild( new_node )
-        
 
-def read_build_dir( log_dir, files_info_dict={} ) -> List[ GraphNode ]:
+
+def read_build_dir( log_dir, files_info_dict=None ) -> List[ GraphNode ]:
+    if files_info_dict is None:
+        files_info_dict = {}
     log_files_list = []
     for root, dirs, fnames in os.walk( log_dir ):
         for fname in fnames:
@@ -627,7 +629,9 @@ def read_build_dir( log_dir, files_info_dict={} ) -> List[ GraphNode ]:
     return read_build_logs( log_files_list, files_info_dict )
 
 
-def read_build_logs( log_files_list, files_info_dict={} ) -> List[ GraphNode ]:
+def read_build_logs( log_files_list, files_info_dict=None ) -> List[ GraphNode ]:
+    if files_info_dict is None:
+        files_info_dict = {}
 #     raw_tree: List[ GraphNode ] = []
     graph_builder = GraphBuilder( files_info_dict )
 
@@ -645,7 +649,7 @@ def read_build_logs( log_files_list, files_info_dict={} ) -> List[ GraphNode ]:
         package_node.data.type = NodeData.NodeType.PACKAGE
         package_node.addChildren( module_tree_list )
 #         raw_tree.append( package_node )
-        
+
         graph_builder.addTree( package_node )
 
     return graph_builder.build_list
@@ -656,7 +660,7 @@ def read_build_log_file( log_path ) -> List[ GraphNode ]:
 
     module_tree_list = []
     level_node_dict: Dict[ int, GraphNode ] = None
-  
+
     line_num = 0
     for line in content.splitlines():
         line_num += 1
@@ -669,7 +673,7 @@ def read_build_log_file( log_path ) -> List[ GraphNode ]:
         if recent_obj_file:
             ## new object file -- expecting include tree
             ## print( f"xxx: >{recent_obj_file}<" )
-            
+
             #recent_obj_file = os.path.realpath( recent_obj_file )
             item_node = GraphNode()
             item_node.data.name = recent_obj_file
@@ -690,7 +694,7 @@ def read_build_log_file( log_path ) -> List[ GraphNode ]:
             if space_pos < 0:
                 ## invalid case -- happens in case of interweaved logs
                 level_node_dict = None
-                _LOGGER.error( f"invalid case - no space found: {line} in {log_path}" )
+                _LOGGER.error( "invalid case - no space found: %s in %s", line, log_path )
                 _LOGGER.error( "invalid (interweaved) file %s:%s", log_path, line_num )
                 return None
                 # raise Exception( f"invalid (interweaved) file {log_path}:{line_num}" )
@@ -708,7 +712,7 @@ def read_build_log_file( log_path ) -> List[ GraphNode ]:
             if len(dots_set) > 1:
                 ## invalid case -- happens in case of interweaved logs
                 level_node_dict = None
-                _LOGGER.error( f"invalid case - invalid chars found: >{dots_text}< {space_pos} in {log_path}" )
+                _LOGGER.error( "invalid case - invalid chars found: >%s< %s in %s", dots_text, space_pos, log_path )
                 _LOGGER.error( "invalid (interweaved) file %s:%s", log_path, line_num )
                 return None
                 # raise Exception( f"invalid (interweaved) file {log_path}:{line_num}" )
@@ -740,8 +744,8 @@ def get_after( content, start ):
     except ValueError:
         pass
     return None
- 
- 
+
+
 def escape_ansi(line):
     ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
     return ansi_escape.sub('', line)
@@ -761,17 +765,20 @@ def read_files_info( files_info_path ):
         in_file = data_tuple[0]
         real_name = data_tuple[1]
         ret_data[ in_file ]   = [ real_name, int(data_tuple[2]) ]
-        ret_data[ real_name ] = [ real_name, int(data_tuple[2]) ]       ## sometimes compiler prints real path (resolves links) 
+        ## sometimes compiler prints real path (resolves links)
+        ret_data[ real_name ] = [ real_name, int(data_tuple[2]) ]
     return ret_data
 
 
 ## ===================================================================
 
 
-def generate_pages( build_tree: IncludeGraph, out_dir, files_info_dict={}, config_params_dict=None ):
+def generate_pages( build_tree: IncludeGraph, out_dir, files_info_dict=None, config_params_dict=None ):
+    if files_info_dict is None:
+        files_info_dict = {}
     if config_params_dict is None:
         config_params_dict = {}
- 
+
     params_dict: Dict[ str, Any ] = {}
     generate_main_page( build_tree, params_dict, out_dir )
 
@@ -793,7 +800,7 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
     child_counter = 0
     child_size    = len( all_nodes )
 
-    handled_nodes = set()
+    handled_nodes: Set[str] = set()
     ## child_node: GraphNode
     for child_node in all_nodes:
         child_counter += 1
@@ -809,10 +816,10 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
         child_graph: Graph = generate_dot_graph2( build_tree, [ child_node ], output_dir )
         child_dir = os.path.join( output_dir, child_node.data.subdir )
         os.makedirs( child_dir, exist_ok=True )
-        
+
         _LOGGER.info( "storing dot graph" )
         store_dot_graph( child_graph, child_dir )
-        
+
         if child_node in package_nodes:
             ## package
             include_counter = count_packages_includes( [child_node] )
@@ -820,7 +827,7 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
         else:
             ## header
             included_list = get_includes_list( build_tree, object_files_names, child_node.data.include_counter )
-        
+
         page_params = item_config_dict.copy()
         page_params.update( { "root_dir": output_dir,
                               "main_page_link": main_page_link,
@@ -859,7 +866,7 @@ def get_includes_list( build_tree, object_files_names, include_counter ):
 
 
 def count_packages_includes( package_nodes_list: List[GraphNode] ):
-    include_counter = collections.Counter()
+    include_counter: collections.Counter = collections.Counter()
     for package_node in package_nodes_list:
         for obj_node in package_node.children:
             names = get_names( obj_node.data.all_children )
@@ -877,10 +884,10 @@ def generate_html_page( output_dir, page_params ):
                           "svg_name":     "include_tree.gv.svg",
                           "svg_embed_content":  svg_content
                           } )
- 
+
     template_path = os.path.join( SCRIPT_DIR, "template", "include_tree_page.html.tmpl" )
     main_out_path = os.path.join( output_dir, "item.html" )
- 
+
     _LOGGER.info( "writing page: file://%s", main_out_path )
     texttemplate.generate( template_path, main_out_path, INPUT_DICT=page_params )
 
@@ -956,7 +963,7 @@ def generate_base_graph( all_nodes, root_dir ) -> Graph:
             new_node.set( "tooltip", child_name )
             new_node.set( "href", child_node.data.href )
 
-    added_edges = set()
+    added_edges: Set[ Tuple[str, str] ] = set()
     for child in all_nodes:
         parents = child.parents
         if parents is None:
@@ -977,7 +984,7 @@ def generate_base_graph( all_nodes, root_dir ) -> Graph:
 def store_dot_graph( graph: Graph, root_dir ):
 #     out_raw = os.path.join( root_dir, "include_tree.gv.txt" )
 #     graph.writeRAW( out_raw )
-# 
+#
 #     out_png = os.path.join( root_dir, "include_tree.gv.png" )
 #     graph.writePNG( out_png )
 
@@ -1030,10 +1037,10 @@ def main():
 
 #     ## pprint.pprint( build_tree )
 #     print_graph( build_tree.root.children )
-     
+
 #     out_stats = os.path.join( args.outdir, "most_common.txt" )
 #     print_stats( build_tree, out_stats )
- 
+
     ##
     ## generate HTML data
     ##

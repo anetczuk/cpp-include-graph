@@ -27,6 +27,6 @@ setup( name='cppincludegraph',
        version='2.0',
        description='headers include graph generator for C++ projects',
        url='https://github.com/anetczuk/cpp-include-graph',
-       packages = packages_list,
-       install_requires = install_reqs
-     )
+       packages=packages_list,
+       install_requires=install_reqs
+       )
