@@ -285,7 +285,8 @@ class IncludeGraph():
             parents  = calculate_parents( node )
             ret_list.update( children )
             ret_list.update( parents )
-        ret_list.remove( self.root )
+        if ret_list:
+            ret_list.remove( self.root )
         return ret_list
 
     def findMaxIncludeNodes(self, start_nodes_list: List[ GraphNode ]) -> Set[ GraphNode ]:
@@ -629,7 +630,7 @@ class GraphBuilder():
 #     return read_build_logs( log_files_list, files_info_dict )
 
 
-def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None ) -> List[ GraphNode ]:
+def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, build_regex=None ) -> List[ GraphNode ]:
     if files_info_dict is None:
         files_info_dict = {}
 #     raw_tree: List[ GraphNode ] = []
@@ -640,7 +641,7 @@ def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None ) ->
     for log_path in log_files_list:
         read_counter += 1
         _LOGGER.info( "%s/%s: reading log file: %s", read_counter, read_size, log_path )
-        module_tree_list = read_build_log_file( log_path )
+        module_tree_list = read_build_log_file( log_path, build_regex )
         if not module_tree_list:
             continue
         package_node = GraphNode()
@@ -655,7 +656,7 @@ def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None ) ->
     return graph_builder.build_list
 
 
-def read_build_log_file( log_path ) -> List[ GraphNode ]:
+def read_build_log_file( log_path, build_regex=None ) -> List[ GraphNode ]:
     content = read_file( log_path )
 
     module_tree_list = []
@@ -669,7 +670,15 @@ def read_build_log_file( log_path ) -> List[ GraphNode ]:
 
         ## print( "line:", line )
 
-        recent_obj_file = get_after( line, "Building CXX object " )
+        recent_obj_file = None
+        if not build_regex:
+            ## defaulting to make output
+            build_regex = ".*Building \S* object (.*)$"
+
+        found_obj_file = re.findall( build_regex, line )
+        if len(found_obj_file) == 1:
+            recent_obj_file = found_obj_file[0]
+
         if recent_obj_file:
             ## new object file -- expecting include tree
             ## print( f"xxx: >{recent_obj_file}<" )
@@ -1017,6 +1026,8 @@ def main():
 
     parser.add_argument( '-lf', '--log_files', nargs='+', action='store', required=False, default="",
                          help="List of build log files" )
+    parser.add_argument( '--build_regex', action='store', required=False, default="",
+                         help="Build object regex" )
     parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
                          help="List of headers directories to reduce" )
     parser.add_argument( '--file_info', action='store', required=False, default="",
@@ -1033,7 +1044,7 @@ def main():
 
     _LOGGER.info( "reading build logs: %s", args.log_files )
     files_info_dict = read_files_info( args.file_info )
-    graph_list: List[ GraphNode ] = read_build_logs( args.log_files, files_info_dict, args.reduce_dirs )
+    graph_list: List[ GraphNode ] = read_build_logs( args.log_files, files_info_dict, args.reduce_dirs, args.build_regex )
 
     _LOGGER.info( "building include graph" )
     build_tree: IncludeGraph = IncludeGraph( graph_list )
