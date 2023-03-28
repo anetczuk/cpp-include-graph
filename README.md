@@ -10,7 +10,35 @@ Generate headers include tree of whole C++ project in form of GraphViz graphs.
 
 In `examples/cpp-cmake` there is example of include tree generated based on CMake project.
 
-[![include graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
+Generator is executed with following command for reduced and full graph respectively:
+```
+cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+
+cppincludegraphgen -lf build_log.txt --outdir include_graph_full
+```
+
+[![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
+
+[![include full graph](examples/cpp-cmake/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-cmake/include_graph_full/include_tree.gv.png)
+
+
+
+## Makefile example
+
+In `examples/cpp-makefile` there is example of include tree generated based on Makefile project.
+
+Generator is executed with following command for reduced and full graph respectively:
+```
+cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+
+cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --outdir include_graph_full
+```
+
+Note that there is `--build_regex` passed through command line. It highly depends on configuration of `Makefile` file and it's output to stdout.
+
+[![include reduced graph](examples/cpp-makefile/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-makefile/include_graph_reduced/include_tree.gv.png)
+
+[![include full graph](examples/cpp-makefile/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-makefile/include_graph_full/include_tree.gv.png)
 
 
 

@@ -37,7 +37,7 @@ compile_code() {
           -DCMAKE_CXX_FLAGS="-H" \
           "$SRC_DIR"
     
-    cmake --build . 2>&1 | tee "$BUILD_LOG_FILE"
+    cmake --build . -- -j 1 2>&1 | tee "$BUILD_LOG_FILE"
 }
 
 compile_code
