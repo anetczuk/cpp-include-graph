@@ -1,4 +1,5 @@
 usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
+                          [--log_dir LOG_DIR] [--log_name LOG_NAME]
                           [--build_regex BUILD_REGEX]
                           [-rd REDUCE_DIRS [REDUCE_DIRS ...]]
                           [--file_info FILE_INFO] [--outdir OUTDIR]
@@ -10,10 +11,12 @@ optional arguments:
   -la, --logall         Log all messages
   -lf LOG_FILES [LOG_FILES ...], --log_files LOG_FILES [LOG_FILES ...]
                         List of build log files
+  --log_dir LOG_DIR     Root for searching for build log files
+  --log_name LOG_NAME   Name of build log file to searching for
   --build_regex BUILD_REGEX
                         Build object regex
   -rd REDUCE_DIRS [REDUCE_DIRS ...], --reduce_dirs REDUCE_DIRS [REDUCE_DIRS ...]
                         List of headers directories to reduce
   --file_info FILE_INFO
                         Files information
-  --outdir OUTDIR       Output HTML
+  --outdir OUTDIR       Output directory

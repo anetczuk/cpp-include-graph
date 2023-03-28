@@ -617,17 +617,19 @@ class GraphBuilder():
                 existing_parent.addChild( new_node )
 
 
-# def read_build_dir( log_dir, files_info_dict=None ) -> List[ GraphNode ]:
-#     if files_info_dict is None:
-#         files_info_dict = {}
-#     log_files_list = []
-#     for root, dirs, fnames in os.walk( log_dir ):
-#         for fname in fnames:
-#             if fname != "build.make.log":
-#                 continue
-#             log_path = os.path.join( root, fname )
-#             log_files_list.append( log_path )
-#     return read_build_logs( log_files_list, files_info_dict )
+def find_build_logs( log_dir, log_name ):
+    if log_dir is None:
+        return []
+    if log_name is None:
+        log_name = "build.make.log"
+    log_files_list = []
+    for root, dirs, fnames in os.walk( log_dir ):
+        for fname in fnames:
+            if fname != log_name:
+                continue
+            log_path = os.path.join( root, fname )
+            log_files_list.append( log_path )
+    return log_files_list
 
 
 def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, build_regex=None ) -> List[ GraphNode ]:
@@ -1026,13 +1028,17 @@ def main():
 
     parser.add_argument( '-lf', '--log_files', nargs='+', action='store', required=False, default="",
                          help="List of build log files" )
+    parser.add_argument( '--log_dir', action='store', required=False, default="",
+                         help="Root for searching for build log files" )
+    parser.add_argument( '--log_name', action='store', required=False, default="",
+                         help="Name of build log file to searching for" )
     parser.add_argument( '--build_regex', action='store', required=False, default="",
                          help="Build object regex" )
     parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
                          help="List of headers directories to reduce" )
     parser.add_argument( '--file_info', action='store', required=False, default="",
                          help="Files information" )
-    parser.add_argument( '--outdir', action='store', required=False, default="", help="Output HTML" )
+    parser.add_argument( '--outdir', action='store', required=False, default="", help="Output directory" )
 
     args = parser.parse_args()
 
@@ -1042,9 +1048,22 @@ def main():
     else:
         logging.getLogger().setLevel( logging.INFO )
 
-    _LOGGER.info( "reading build logs: %s", args.log_files )
+
+    log_dir  = args.log_dir
+    log_name = args.log_name
+
+    if len(log_dir) == 0:
+        log_dir = None
+    if len(log_name) == 0:
+        log_name = None
+
+    found_logs = find_build_logs( log_dir, log_name )
+    if len(args.log_files) > 0:
+        found_logs.extend( args.log_files )
+
+    _LOGGER.info( "reading build logs: %s", found_logs )
     files_info_dict = read_files_info( args.file_info )
-    graph_list: List[ GraphNode ] = read_build_logs( args.log_files, files_info_dict, args.reduce_dirs, args.build_regex )
+    graph_list: List[ GraphNode ] = read_build_logs( found_logs, files_info_dict, args.reduce_dirs, args.build_regex )
 
     _LOGGER.info( "building include graph" )
     build_tree: IncludeGraph = IncludeGraph( graph_list )

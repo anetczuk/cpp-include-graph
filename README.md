@@ -5,6 +5,15 @@ Do you want to see how looks headers include tree in your project? Then this too
 Generate headers include tree of whole C++ project in form of GraphViz graphs.
 Tool parses output of `g++` and `clang` compiler and presents it in form of graph.
 
+Key features:
+- generate include graphs
+- count number of includes in objects per header
+- estimate size of header with it's includes
+- rank headers per total size
+- generate HTML page with clickable graphs and statistics
+
+Generator works with `Makefile`, `make`, `cmake` and `catkin` projects.
+
 
 
 ## How to use?
@@ -39,23 +48,6 @@ For more details see CMake and Makefile examples.
 
 
 
-## CMake example
-
-In `examples/cpp-cmake` there is example of include tree generated based on CMake project.
-
-Generator is executed with following command for reduced and full graph respectively:
-```
-cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
-
-cppincludegraphgen -lf build_log.txt --outdir include_graph_full
-```
-
-[![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
-
-[![include full graph](examples/cpp-cmake/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-cmake/include_graph_full/include_tree.gv.png)
-
-
-
 ## Makefile example
 
 In `examples/cpp-makefile` there is example of include tree generated based on Makefile project.
@@ -72,6 +64,23 @@ Note that there is `--build_regex` passed through command line. It highly depend
 [![include reduced graph](examples/cpp-makefile/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-makefile/include_graph_reduced/include_tree.gv.png)
 
 [![include full graph](examples/cpp-makefile/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-makefile/include_graph_full/include_tree.gv.png)
+
+
+
+## CMake example
+
+In `examples/cpp-cmake` there is example of include tree generated based on CMake project.
+
+Generator is executed with following command for reduced and full graph respectively:
+```
+cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+
+cppincludegraphgen -lf build_log.txt --outdir include_graph_full
+```
+
+[![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
+
+[![include full graph](examples/cpp-cmake/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-cmake/include_graph_full/include_tree.gv.png)
 
 
 
