@@ -791,11 +791,11 @@ def generate_pages( build_tree: IncludeGraph, out_dir, files_info_dict=None, con
         config_params_dict = {}
 
     params_dict: Dict[ str, Any ] = {}
-    generate_main_page( build_tree, params_dict, out_dir )
+    generate_graph_pages( build_tree, params_dict, out_dir )
 
 
 ##
-def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir ):
+def generate_graph_pages( build_tree: IncludeGraph, item_config_dict, output_dir ):
     main_page_link = os.path.join( output_dir, "item.html" )
 
     all_nodes: List[ GraphNode ] = build_tree.getFlatList()
@@ -824,8 +824,8 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
         handled_nodes.add( child_name )
 
         _LOGGER.info( "generating dot graph" )
-        child_graph: Graph = generate_dot_graph2( build_tree, [ child_node ], output_dir )
         child_dir = os.path.join( output_dir, child_node.data.subdir )
+        child_graph: Graph = generate_dot_graph2( build_tree, [ child_node ], child_dir )
         os.makedirs( child_dir, exist_ok=True )
 
         _LOGGER.info( "storing dot graph" )
@@ -840,7 +840,7 @@ def generate_main_page( build_tree: IncludeGraph, item_config_dict, output_dir )
             included_list = get_includes_list( build_tree, object_files_names, child_node.data.include_counter )
 
         page_params = item_config_dict.copy()
-        page_params.update( { "root_dir": output_dir,
+        page_params.update( { "root_dir":       output_dir,
                               "main_page_link": main_page_link,
                               "item_data":      child_node.data,
                               "children_list":  child_node.children,
@@ -889,27 +889,28 @@ def count_packages_includes( package_nodes_list: List[GraphNode] ):
 
 
 ##
-def generate_html_page( output_dir, page_params ):
-    svg_path    = os.path.join( output_dir, "include_tree.gv.svg" )
+def generate_html_page( page_dir, page_params ):
+    svg_path    = os.path.join( page_dir, "include_tree.gv.svg" )
     svg_content = read_file( svg_path )
     os.remove( svg_path )                   ## remove file -- content embedded into HTML
 
     ## prepare input for template
-    page_params.update( { "body_color":   "#bbbbbb",
-                          "svg_name":     "include_tree.gv.svg",
-                          "svg_embed_content":  svg_content
+    page_params.update( { "page_dir":          page_dir,
+                          "body_color":        "#bbbbbb",
+                          "svg_name":          "include_tree.gv.svg",
+                          "svg_embed_content": svg_content
                           } )
 
     template_path = os.path.join( SCRIPT_DIR, "template", "include_tree_page.html.tmpl" )
-    main_out_path = os.path.join( output_dir, "item.html" )
+    html_out_path = os.path.join( page_dir, "item.html" )
 
-    _LOGGER.info( "writing page: file://%s", main_out_path )
-    texttemplate.generate( template_path, main_out_path, INPUT_DICT=page_params )
+    _LOGGER.info( "writing page: file://%s", html_out_path )
+    texttemplate.generate( template_path, html_out_path, INPUT_DICT=page_params )
 
 
-def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ], root_dir ) -> Graph:
+def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ], base_dir ) -> Graph:
     active_nodes = build_tree.getConnectedNodes( nodes_list )
-    graph: Graph = generate_base_graph( active_nodes, root_dir )
+    graph: Graph = generate_base_graph( active_nodes, base_dir )
 
     include_nodes = build_tree.findMaxIncludeNodes( nodes_list )
 
@@ -949,14 +950,11 @@ def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ]
                   }
         set_node_style( graph_node, style )
 
-        #TODO: is this required?
-        graph_node.set( "href", tree_node.data.href )
-
     return graph
 
 
 ##TODO: remove root_dir
-def generate_base_graph( all_nodes, root_dir ) -> Graph:
+def generate_base_graph( all_nodes, base_dir ) -> Graph:
     graph: Graph = Graph()
     base_graph = graph.base_graph
     base_graph.set_name( "include_graph" )
@@ -976,7 +974,8 @@ def generate_base_graph( all_nodes, root_dir ) -> Graph:
         new_node   = graph.addNode( child_name, shape="box", label=item_name )
         if new_node:
             new_node.set( "tooltip", child_name )
-            new_node.set( "href", child_node.data.href )
+            rel_link = os.path.relpath( child_node.data.href, base_dir )
+            new_node.set( "href", rel_link )
 
     added_edges: Set[ Tuple[str, str] ] = set()
     for child in all_nodes:
@@ -996,14 +995,14 @@ def generate_base_graph( all_nodes, root_dir ) -> Graph:
     return graph
 
 
-def store_dot_graph( graph: Graph, root_dir ):
-#     out_raw = os.path.join( root_dir, "include_tree.gv.txt" )
+def store_dot_graph( graph: Graph, page_dir ):
+#     out_raw = os.path.join( page_dir, "include_tree.gv.txt" )
 #     graph.writeRAW( out_raw )
 #
-#     out_png = os.path.join( root_dir, "include_tree.gv.png" )
+#     out_png = os.path.join( page_dir, "include_tree.gv.png" )
 #     graph.writePNG( out_png )
 
-    out_svg = os.path.join( root_dir, "include_tree.gv.svg" )
+    out_svg = os.path.join( page_dir, "include_tree.gv.svg" )
     graph.write( out_svg, file_format='svg')
 
 
