@@ -30,7 +30,7 @@ compile_code() {
     ## build project and collect info
     ##
     
-    make CXX="g++" CXXFLAGS="-H" 2>&1 | tee "$BUILD_LOG_FILE"
+    make CXX="g++" CXXFLAGS="-H" -j1 2>&1 | tee "$BUILD_LOG_FILE"
 }
 
 compile_code

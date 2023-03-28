@@ -3,6 +3,39 @@
 Do you want to see how looks headers include tree in your project? Then this tool is for You.
 
 Generate headers include tree of whole C++ project in form of GraphViz graphs.
+Tool parses output of `g++` and `clang` compiler and presents it in form of graph.
+
+
+
+## How to use?
+
+Generator as input needs build log of `gcc` or `clang` compiler. Compilation have to be done using `-H` flag
+informing compiler to print include tree to `stderr`.
+Passing the flag to `cmake` and obtaining build log can be done in following way:
+```
+    cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+          -DCMAKE_C_FLAGS="-H" \
+          -DCMAKE_CXX_FLAGS="-H" \
+          ...
+    cmake --build . -- -j 1 2>&1 | tee build_log.txt
+```
+Similarly, running `Makefile` can be done like this:
+```
+    make CXX="g++" CXXFLAGS="-H" -j1 2>&1 | tee build_log.txt
+```
+Note that `cmake` and `make` have to be executed with one job only (`-j 1`), because otherwise compiler output will be 
+interweaved and impossible to parse.
+
+When build log is collected then it's time to execute the generator. 
+There is example of generating graph for cmake output:
+```
+    cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+```
+Whole commands list can be found [here](doc/cmd_args.txt). List is produced by calling `cppincludegraphgen --help`.
+By argument `--reduce_dirs` generator is informed to *cut* subtree of headers in given directories amd present graph in reduced form (see examples). 
+Other arguments seems to be straightforward.  
+
+For more details see CMake and Makefile examples.
 
 
 
@@ -44,6 +77,7 @@ Note that there is `--build_regex` passed through command line. It highly depend
 
 ## References
 
+- [showgraph](https://github.com/anetczuk/showgraph-py)
 - [Texthon](texthon.chipsforbrain.org/)
 
 

@@ -1,0 +1,19 @@
+usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
+                          [--build_regex BUILD_REGEX]
+                          [-rd REDUCE_DIRS [REDUCE_DIRS ...]]
+                          [--file_info FILE_INFO] [--outdir OUTDIR]
+
+cpp include graph
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -la, --logall         Log all messages
+  -lf LOG_FILES [LOG_FILES ...], --log_files LOG_FILES [LOG_FILES ...]
+                        List of build log files
+  --build_regex BUILD_REGEX
+                        Build object regex
+  -rd REDUCE_DIRS [REDUCE_DIRS ...], --reduce_dirs REDUCE_DIRS [REDUCE_DIRS ...]
+                        List of headers directories to reduce
+  --file_info FILE_INFO
+                        Files information
+  --outdir OUTDIR       Output HTML
