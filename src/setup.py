@@ -20,13 +20,17 @@ def read_list( file_path ):
 
 packages_list = find_packages( include=['cppincludegraph', 'cppincludegraph.*'] )
 
-install_reqs = read_list( os.path.join( SCRIPT_DIR, "requirements.txt" ) )
+packages_data = { "cppincludegraph": ["*.tmpl"] }
 
+## every time setup info changes then version number should be increased
 
 setup( name='cppincludegraph',
        version='2.0',
        description='headers include graph generator for C++ projects',
        url='https://github.com/anetczuk/cpp-include-graph',
+       author='anetczuk',
+       license='BSD 3-Clause',
        packages=packages_list,
-       install_requires=install_reqs
+       package_data=packages_data,
+       install_requires=['texthon', 'showgraph']
        )
