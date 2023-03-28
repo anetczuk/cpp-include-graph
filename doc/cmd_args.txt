@@ -2,7 +2,7 @@ usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
                           [--log_dir LOG_DIR] [--log_name LOG_NAME]
                           [--build_regex BUILD_REGEX]
                           [-rd REDUCE_DIRS [REDUCE_DIRS ...]]
-                          [--file_info FILE_INFO] [--outdir OUTDIR]
+                          [--files_info FILES_INFO] [--outdir OUTDIR]
 
 cpp include graph
 
@@ -17,6 +17,6 @@ optional arguments:
                         Build object regex
   -rd REDUCE_DIRS [REDUCE_DIRS ...], --reduce_dirs REDUCE_DIRS [REDUCE_DIRS ...]
                         List of headers directories to reduce
-  --file_info FILE_INFO
+  --files_info FILES_INFO
                         Files information
   --outdir OUTDIR       Output directory

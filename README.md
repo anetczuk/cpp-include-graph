@@ -36,13 +36,17 @@ Note that `cmake` and `make` have to be executed with one job only (`-j 1`), bec
 interweaved and impossible to parse.
 
 When build log is collected then it's time to execute the generator. 
-There is example of generating graph for cmake output:
+There is example of generating graph for `cmake` output:
 ```
     cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
 ```
 Whole commands list can be found [here](doc/cmd_args.txt). List is produced by calling `cppincludegraphgen --help`.
-By argument `--reduce_dirs` generator is informed to *cut* subtree of headers in given directories amd present graph in reduced form (see examples). 
-Other arguments seems to be straightforward.  
+Highlighted arguments:
+- `--files_info` information about source and compiled files. Parameter is helpful when compilation is done in containers or remote locations. 
+File can be generated using `cppincludegraphdump` script.
+- `--reduce_dirs` informeds generator to *cut* subtree of headers in given directories amd present graph in reduced form (see examples).
+ 
+Other arguments seems to be straightforward.
 
 For more details see CMake and Makefile examples.
 

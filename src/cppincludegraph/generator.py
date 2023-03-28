@@ -1036,7 +1036,7 @@ def main():
                          help="Build object regex" )
     parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
                          help="List of headers directories to reduce" )
-    parser.add_argument( '--file_info', action='store', required=False, default="",
+    parser.add_argument( '--files_info', action='store', required=False, default="",
                          help="Files information" )
     parser.add_argument( '--outdir', action='store', required=False, default="", help="Output directory" )
 
@@ -1062,7 +1062,7 @@ def main():
         found_logs.extend( args.log_files )
 
     _LOGGER.info( "reading build logs: %s", found_logs )
-    files_info_dict = read_files_info( args.file_info )
+    files_info_dict = read_files_info( args.files_info )
     graph_list: List[ GraphNode ] = read_build_logs( found_logs, files_info_dict, args.reduce_dirs, args.build_regex )
 
     _LOGGER.info( "building include graph" )
