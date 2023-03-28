@@ -1,0 +1,66 @@
+#!/bin/bash
+
+##
+## Dump files info to file
+##
+
+##set -eu
+set -e
+
+
+if [ "$#" -lt 2 ]; then
+    echo "Illegal number of parameters -- expected two parameters: <search directory> <output file>"
+    exit 1
+fi
+
+
+SEARCH_DIR="$1"
+
+OUT_FILE="$2"
+
+
+APPEND="0"
+if [[ $* == *--append* ]]; then
+    APPEND="1"
+fi
+
+if [ "$APPEND" == "0" ]; then
+    echo "" > $OUT_FILE
+else
+    echo "appending output file"
+fi
+
+
+SEARCH_DIR="$(realpath -s "$SEARCH_DIR")"
+
+
+## works both under bash and sh
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+
+
+FILES_LIST=$(find -L $SEARCH_DIR -type f) || true
+
+files_number=$(echo "$FILES_LIST" | wc -l)
+couter=0
+
+echo "found files: $files_number"
+
+for i in $FILES_LIST; do
+    couter=$((couter + 1))
+    if [ $(( $couter % 100 )) -eq 0 ]; then
+        echo "$couter / $files_number"
+    fi
+
+    REAL_PATH=$(realpath "$i")
+    #REAL_PATH="$(readlink -f "$i")"
+
+    FILE_SIZE=`du -b "$REAL_PATH" | cut -f1`
+    #FILE_SIZE=$(find "$REAL_PATH" -printf "%s")
+    #FILE_SIZE=$(stat -c %s "$REAL_PATH")
+    #FILE_SIZE=$(wc -c <"$REAL_PATH")
+    
+    echo "\"$i\" \"$REAL_PATH\" $FILE_SIZE" >> $OUT_FILE
+done;
+
+
+echo -e "\nDone."
