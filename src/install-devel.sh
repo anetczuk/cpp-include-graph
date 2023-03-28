@@ -10,4 +10,6 @@ set -eu
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
+## creates "*.egg-info" directory along package dir
+
 pip3 install --user -e "$SCRIPT_DIR" 
