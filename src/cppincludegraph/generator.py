@@ -38,6 +38,7 @@ class NodeData():
 
     def __init__(self):
         self.name: str       = None
+        self.label: str      = None
         self.type: NodeData.NodeType = None
         self.fsize: int      = 0            ## file size
         self.dc_size: int    = 0            ## size of direct children
@@ -183,7 +184,7 @@ class GraphNode():
 ##
 class IncludeGraph():
 
-    def __init__(self, packages_list: List[ GraphNode ] = None):
+    def __init__(self, packages_list: List[ GraphNode ] = None, names_base_dir=None):
         if packages_list is None:
             packages_list = []
         self.root: GraphNode = GraphNode()
@@ -191,6 +192,17 @@ class IncludeGraph():
         self.root.addChildren( packages_list )
 
         self.nodes_dict = {}
+
+        if names_base_dir:
+            names_base_dir_len = len(names_base_dir)
+            all_nodes = self.getFlatList()
+            for node in all_nodes:
+                if node.data.name.startswith( names_base_dir ):
+                    node.data.label = node.data.name[ names_base_dir_len : ]
+                    if node.data.label[0] == "/":
+                        node.data.label = node.data.label[1 : ]
+                else:
+                    node.data.label = node.data.name
 
 #         self._updateNames()
         self._calculateDirs()
@@ -211,13 +223,13 @@ class IncludeGraph():
 
     def _calculateDirs(self):
         for package in self.root.children:
-            pkg_subdir          = prepare_filesystem_name( package.data.name )
+            pkg_subdir          = prepare_filesystem_name( package.data.label )
             package.data.subdir = pkg_subdir
             package.data.href   = os.path.join( pkg_subdir, "item.html" )
 
             all_children = package.getFlatList( False )
             for child in all_children:
-                child_subdir = prepare_filesystem_name( child.data.name )
+                child_subdir = prepare_filesystem_name( child.data.label )
                 if not child.data.name.startswith("/"):
                     child_subdir = os.path.join( pkg_subdir, child_subdir )
                 child.data.subdir = child_subdir
@@ -916,8 +928,8 @@ def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ]
 
     ## tree_node: GraphNode
     for tree_node in include_nodes:
-        item_name = tree_node.data.name
-        graph_node = graph.getNode( item_name )
+        item_label = tree_node.data.label
+        graph_node = graph.getNode( item_label )
         if not graph_node:
             continue
 
@@ -931,7 +943,6 @@ def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ]
     top_nodes = graph.getNodesTop()
     graph.setNodesRank( top_nodes, "min" )
     for graph_node in top_nodes:
-        graph_node.set( "tooltip", item_name )
         style = { "style": "filled",
                   "fillcolor": "yellow"
                   }
@@ -939,12 +950,10 @@ def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ]
 
     ## tree_node: GraphNode
     for tree_node in nodes_list:
-        item_name = tree_node.data.name
-        graph_node = graph.getNode( item_name )
+        item_label = tree_node.data.label
+        graph_node = graph.getNode( item_label )
         if not graph_node:
             continue
-
-        graph_node.set( "tooltip", item_name )
         style = { "style": "filled",
                   "fillcolor": "red"
                   }
@@ -964,17 +973,18 @@ def generate_base_graph( all_nodes, base_dir ) -> Graph:
     ## add nodes
 
 #     added_nodes = set()
-    for child_node in all_nodes:
-        child_name = child_node.data.name
-#         if child_name in added_nodes:
+    for item_node in all_nodes:
+        item_name  = item_node.data.name
+        item_label = item_node.data.label
+#         if item_name in added_nodes:
 #             continue
-#         added_nodes.add( child_name )
+#         added_nodes.add( item_name )
 
-        item_name  = os.path.basename( child_name )
-        new_node   = graph.addNode( child_name, shape="box", label=item_name )
+        base_name  = os.path.basename( item_name )
+        new_node   = graph.addNode( item_label, shape="box", label=base_name )
         if new_node:
-            new_node.set( "tooltip", child_name )
-            rel_link = os.path.relpath( child_node.data.href, base_dir )
+            new_node.set( "tooltip", item_label )
+            rel_link = os.path.relpath( item_node.data.href, base_dir )
             new_node.set( "href", rel_link )
 
     added_edges: Set[ Tuple[str, str] ] = set()
@@ -985,7 +995,7 @@ def generate_base_graph( all_nodes, base_dir ) -> Graph:
         for parent in parents:
             if parent not in all_nodes:
                 continue
-            new_dege = ( parent.data.name, child.data.name )
+            new_dege = ( parent.data.label, child.data.label )
             if new_dege in added_edges:
                 ## skip edge
                 continue
@@ -1035,6 +1045,8 @@ def main():
                          help="Build object regex" )
     parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
                          help="List of headers directories to reduce" )
+    parser.add_argument( '--rel_names', action='store', required=False, default="",
+                         help="Reduce prefix of all names" )
     parser.add_argument( '--files_info', action='store', required=False, default="",
                          help="Files information" )
     parser.add_argument( '--outdir', action='store', required=False, default="", help="Output directory" )
@@ -1065,7 +1077,7 @@ def main():
     graph_list: List[ GraphNode ] = read_build_logs( found_logs, files_info_dict, args.reduce_dirs, args.build_regex )
 
     _LOGGER.info( "building include graph" )
-    build_tree: IncludeGraph = IncludeGraph( graph_list )
+    build_tree: IncludeGraph = IncludeGraph( graph_list, args.rel_names )
     build_tree.setRootDir( args.outdir )
 
 #     ## pprint.pprint( build_tree )

@@ -86,7 +86,7 @@ Project is distributed under the BSD 3-Clause license.
 #{ if item_data:
 #!     item_type = item_data.getTypeName()
     <div class="info_content">
-        <div><span style="font-weight: bold;">${item_data.name}</span></div>
+        <div><span style="font-weight: bold;">${item_data.label}</span></div>
         <br />
         <table>
             <tr>
@@ -197,7 +197,7 @@ ${ generate_include_table( page_dir, included_list ) }
 #!     item_data = item.data
 #!     rel_link  = os.path.relpath( item_data.href, page_dir )
             <tr>
-                <td><code><a href="${rel_link}">${item_data.name}</a></code></td>
+                <td><code><a href="${rel_link}">${item_data.label}</a></code></td>
                 <td>${print_size_kb( item_data.dc_size )}</td>
             </tr>
 #}
@@ -223,7 +223,7 @@ ${ generate_object_files_list( page_dir, children_list, list_subtitle ) }
 #!     item_data = item.data
 #!     rel_link  = os.path.relpath( item_data.href, page_dir )
             <tr>
-                <td><code><a href="${rel_link}">${item_data.name}</a></code></td>
+                <td><code><a href="${rel_link}">${item_data.label}</a></code></td>
                 <td>${print_size_kb( item_data.fsize )}</td>
                 <td>${print_size_kb( item_data.ai_size )}</td>
             </tr>
@@ -245,7 +245,7 @@ ${ generate_object_files_list( page_dir, children_list, list_subtitle ) }
 #!     item_data = item.data
 #!     rel_link  = os.path.relpath( item_data.href, page_dir )
             <tr>
-                <td><code><a href="${rel_link}">${item_data.name}</a></code></td>
+                <td><code><a href="${rel_link}">${item_data.label}</a></code></td>
                 <td>${print_size_kb( item_data.fsize )}</td>
                 <td>${print_size_kb( item_data.ai_size )}</td>
             </tr>
@@ -269,7 +269,7 @@ ${ generate_object_files_list( page_dir, children_list, list_subtitle ) }
 #!     item_data = item.data
 #!     rel_link  = os.path.relpath( item_data.href, page_dir )
             <tr>
-                <td><code><a href="${rel_link}">${item_data.name}</a></code></td>
+                <td><code><a href="${rel_link}">${item_data.label}</a></code></td>
                 <td>${print_size_kb( item_data.fsize )}</td>
             </tr>
 #}
@@ -293,7 +293,7 @@ ${ generate_object_files_list( page_dir, children_list, list_subtitle ) }
 #!     total_inclusions += item[1]
 #!     rel_link  = os.path.relpath( item_data.href, page_dir )
             <tr>
-                <td><code><a href="${rel_link}">${item_data.name}</a></code></td>
+                <td><code><a href="${rel_link}">${item_data.label}</a></code></td>
                 <td>${item[1]}</td>
                 <td>${ print_size_kb(item_data.fsize) }</td>
                 <td>${ print_size_kb(item_data.ai_size) }</td>
