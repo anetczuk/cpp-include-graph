@@ -5,21 +5,23 @@ usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
                           [--rel_names REL_NAMES] [--files_info FILES_INFO]
                           [--outdir OUTDIR]
 
-cpp include graph
+generate headers include graph based on compiler output
 
 optional arguments:
   -h, --help            show this help message and exit
   -la, --logall         Log all messages
   -lf LOG_FILES [LOG_FILES ...], --log_files LOG_FILES [LOG_FILES ...]
                         List of build log files
-  --log_dir LOG_DIR     Root for searching for build log files
-  --log_name LOG_NAME   Name of build log file to searching for
+  --log_dir LOG_DIR     Root for search for build log files
+  --log_name LOG_NAME   Name of build log file to search for
   --build_regex BUILD_REGEX
-                        Build object regex
+                        Build object regex. If not given then '.*Building \S*
+                        object (.*)$' is used.
   -rd REDUCE_DIRS [REDUCE_DIRS ...], --reduce_dirs REDUCE_DIRS [REDUCE_DIRS ...]
                         List of headers directories to reduce
   --rel_names REL_NAMES
                         Reduce prefix of all names
   --files_info FILES_INFO
-                        Files information
+                        Files information (file can be generated using
+                        'cppincludegraphdump' script)
   --outdir OUTDIR       Output directory

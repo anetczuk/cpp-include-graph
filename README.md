@@ -48,7 +48,7 @@ File can be generated using `cppincludegraphdump` script.
  
 Other arguments seems to be straightforward.
 
-For more details see CMake and Makefile examples.
+For more details see examples below.
 
 
 
@@ -85,6 +85,18 @@ cppincludegraphgen -lf build_log.txt --outdir include_graph_full
 [![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
 
 [![include full graph](examples/cpp-cmake/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-cmake/include_graph_full/include_tree.gv.png)
+
+
+
+## catkin example
+
+Generator is executed with following command for reduced and full graph respectively:
+```
+cppincludegraphgen --log_dir "/path/to/catkin/log/dir" --log_name "build.make.log" --outdir catkin_include_graph
+```
+
+Generator will search for catkin log files in given directory, parse it and produce the graph. Alternatively list 
+of log files can be passed as command line argument `--log_files /path_01/build.log /path_02/build.log ...`.
 
 
 

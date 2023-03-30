@@ -1048,17 +1048,17 @@ def main():
     parser.add_argument( '-lf', '--log_files', nargs='+', action='store', required=False, default="",
                          help="List of build log files" )
     parser.add_argument( '--log_dir', action='store', required=False, default="",
-                         help="Root for searching for build log files" )
+                         help="Root for search for build log files" )
     parser.add_argument( '--log_name', action='store', required=False, default="",
-                         help="Name of build log file to searching for" )
+                         help="Name of build log file to search for" )
     parser.add_argument( '--build_regex', action='store', required=False, default="",
-                         help="Build object regex" )
+                         help="Build object regex. If not given then '.*Building \S* object (.*)$' is used." )
     parser.add_argument( '-rd', '--reduce_dirs', nargs='+', action='store', required=False, default="",
                          help="List of headers directories to reduce" )
     parser.add_argument( '--rel_names', action='store', required=False, default="",
                          help="Reduce prefix of all names" )
     parser.add_argument( '--files_info', action='store', required=False, default="",
-                         help="Files information" )
+                         help="Files information (file can be generated using 'cppincludegraphdump' script)" )
     parser.add_argument( '--outdir', action='store', required=False, default="", help="Output directory" )
 
     args = parser.parse_args()
