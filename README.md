@@ -96,9 +96,9 @@ cppincludegraphgen --log_dir "/path/to/catkin/log/dir" --log_name "build.make.lo
 ```
 
 Generator will search for catkin log files in given directory, parse it and produce the graph. Alternatively list 
-of log files can be passed as command line argument 
+of log files can be passed as command line argument: 
 
-`--log_files /path_01/build.log /path_02/build.log ...`.
+`--log_files /path_01/build.log /path_02/build.log ...`
 
 
 
