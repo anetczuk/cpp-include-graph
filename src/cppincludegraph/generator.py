@@ -193,9 +193,9 @@ class IncludeGraph():
 
         self.nodes_dict = {}
 
+        all_nodes = self.getFlatList()
         if names_base_dir:
             names_base_dir_len = len(names_base_dir)
-            all_nodes = self.getFlatList()
             for node in all_nodes:
                 if node.data.name.startswith( names_base_dir ):
                     node.data.label = node.data.name[ names_base_dir_len : ]
@@ -203,6 +203,9 @@ class IncludeGraph():
                         node.data.label = node.data.label[1 : ]
                 else:
                     node.data.label = node.data.name
+        else:
+            for node in all_nodes:
+                node.data.label = node.data.name
 
 #         self._updateNames()
         self._calculateDirs()
@@ -554,7 +557,8 @@ def print_stats( build_tree: IncludeGraph, out_path ):
 class GraphBuilder():
 
     def __init__(self, files_info_dict=None):
-        self.files_info_dict = files_info_dict
+        self.files_info_dict = files_info_dict                  ## fname -> (fname, fsize)
+        self.load_from_disk  = files_info_dict is None or len(files_info_dict) < 1
         if self.files_info_dict is None:
             self.files_info_dict = {}
         self.nodes_dict      = {}
@@ -572,10 +576,13 @@ class GraphBuilder():
         return new_node_data
 
     def getInfo(self, node_data):
+        """ Return pair (file name, file size). """
+
         item_name = node_data.name
         if node_data.type is NodeData.NodeType.PACKAGE:
             return (item_name, 0)
 
+        ## get data from info file
         file_info = self.files_info_dict.get( item_name, None )
         if file_info:
             return file_info
@@ -586,6 +593,18 @@ class GraphBuilder():
             file_info = self.files_info_dict.get( key, None )
             if file_info:
                 return file_info
+
+        ## could not find data in dict
+
+        if self.load_from_disk:
+            ## read data from disk
+            real_path  = os.path.realpath( item_name )
+            file_stats = os.stat( real_path )
+            file_size  = file_stats.st_size
+            file_data  = ( real_path, file_size )
+            self.files_info_dict[ item_name ] = file_data
+            self.files_info_dict[ real_path ] = file_data
+            return file_data
 
         _LOGGER.warning( "unable to get data for file: %s", item_name )
         return (item_name, 0)
@@ -647,6 +666,7 @@ def find_build_logs( log_dir, log_name ):
 def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, build_regex=None ) -> List[ GraphNode ]:
     if files_info_dict is None:
         files_info_dict = {}
+
 #     raw_tree: List[ GraphNode ] = []
     graph_builder = GraphBuilder( files_info_dict )
 
@@ -1020,18 +1040,8 @@ def store_dot_graph( graph: Graph, page_dir ):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='cpp include graph')
+    parser = argparse.ArgumentParser(description='generate headers include graph based on compiler output')
     parser.add_argument( '-la', '--logall', action='store_true', help='Log all messages' )
-
-#     subparsers = parser.add_subparsers( help='commands', description="select one of subcommands", dest='subcommand', required=True )
-
-    ## =================================================
-
-#     subparser = subparsers.add_parser('all_current', help='Store data from almost all providers using current data if required')
-#     subparser.set_defaults( func=grab_all )
-#     subparser.add_argument( '-f', '--force', action='store_true', help="Force refresh data" )
-#     subparser.add_argument( '-of', '--out_format', action='store', required=True, default="", help="Output format, one of: csv, xls, pickle. If none given, then will be deduced based on extension of output path." )
-#     subparser.add_argument( '-od', '--out_dir', action='store', default="", help="Output directory" )
 
     ## =================================================
 
