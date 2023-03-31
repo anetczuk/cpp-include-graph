@@ -193,7 +193,6 @@ def generate_dot_graph2( build_tree: IncludeGraph, nodes_list: List[ GraphNode ]
     return graph
 
 
-##TODO: remove root_dir
 def generate_base_graph( all_nodes, base_dir ) -> Graph:
     graph: Graph = Graph()
     base_graph = graph.base_graph
