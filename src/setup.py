@@ -25,7 +25,7 @@ packages_data = { "cppincludegraph": ["*.tmpl"] }
 ## every time setup info changes then version number should be increased
 
 setup( name='cppincludegraph',
-       version='2.0',
+       version='2.0.1',
        description='headers include graph generator for C++ projects',
        url='https://github.com/anetczuk/cpp-include-graph',
        author='anetczuk',
