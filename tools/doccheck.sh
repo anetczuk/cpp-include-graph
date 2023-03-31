@@ -6,6 +6,7 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
 src_dir=$SCRIPT_DIR/../src
+examples_dir=$SCRIPT_DIR/../examples
 
 
 ## D100: Missing docstring in public module
@@ -19,7 +20,7 @@ ignore_errors=D100,D101,D102,D103,D104,D105,D107
 
 
 echo "running pydocstyle"
-python3 -m pydocstyle --count --convention=numpy --add-ignore=$ignore_errors $src_dir
+python3 -m pydocstyle --count --convention=numpy --add-ignore=$ignore_errors $src_dir $examples_dir
 # pydocstyle --count --ignore=$ignore_errors $src_dir
 exit_code=$?
 
