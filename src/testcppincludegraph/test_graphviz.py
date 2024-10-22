@@ -21,4 +21,4 @@ class GraphTest(unittest.TestCase):
 
     def test_edge_colors_list(self):
         """Test is dependency project is installed successfully with data."""
-        self.assertGreater( len(EDGE_COLORS_LIST), 0 )
+        self.assertGreater(len(EDGE_COLORS_LIST), 0)

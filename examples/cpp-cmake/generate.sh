@@ -14,4 +14,4 @@ GEN_SCRIPT_PATH="$SCRIPT_DIR/generate-graph.sh"
 
 VENV_DIR="$SCRIPT_DIR/../../venv"
 
-$VENV_DIR/activatevenv.sh "$GEN_SCRIPT_PATH; exit"
+"$VENV_DIR"/activatevenv.sh "$GEN_SCRIPT_PATH; exit"

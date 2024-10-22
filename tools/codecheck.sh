@@ -1,21 +1,37 @@
 #!/bin/bash
 
-#set -eu
-set -u
+set -eu
+#set -u
 
 
 ## works both under bash and sh
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-src_dir=$SCRIPT_DIR/../src
-examples_dir=$SCRIPT_DIR/../examples
+src_dir="$SCRIPT_DIR/../src"
+
+examples_dir="$SCRIPT_DIR/../examples"
+if [ ! -d "$examples_dir" ]; then
+    examples_dir=""
+fi
+
+
+echo "running black"
+black --line-length=120 "$src_dir" "$examples_dir" "$SCRIPT_DIR"
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+
+echo "black -- no warnings found"
 
 
 ## E115 intend of comment
 ## E126 continuation line over-indented for hanging indent
 ## E201 whitespace after '('
 ## E202 whitespace before ')'
+## E203 whitespace before ':' - black formatter adds space before
 ## E221 multiple spaces before equal operator
 ## E241 multiple spaces after ':'
 ## E262 inline comment should start with '# '
@@ -25,11 +41,12 @@ examples_dir=$SCRIPT_DIR/../examples
 ## E501 line too long (80 > 79 characters)
 ## W391 blank line at end of file
 ## D    all docstyle checks
-ignore_errors=E115,E126,E201,E202,E221,E241,E262,E265,E266,E402,E501,W391,D
+ignore_errors=E115,E126,E201,E202,E203,E221,E241,E262,E265,E266,E402,E501,W391,D
 
 
 echo "running pycodestyle"
-pycodestyle --show-source --statistics --count --ignore=$ignore_errors $src_dir $examples_dir
+echo "to ignore warning inline add comment at the end of line: # noqa"
+pycodestyle --show-source --statistics --count --ignore="$ignore_errors" "$src_dir" "$examples_dir" "$SCRIPT_DIR"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -44,7 +61,8 @@ ignore_errors=$ignore_errors,F401
 
 
 echo "running flake8"
-python3 -m flake8 --show-source --statistics --count --ignore=$ignore_errors $src_dir $examples_dir
+echo "to ignore warning for one line put following comment in end of line: # noqa: <warning-code>"
+python3 -m flake8 --show-source --statistics --count --ignore="$ignore_errors" "$src_dir" "$examples_dir" "$SCRIPT_DIR"
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -55,22 +73,65 @@ fi
 echo "flake8 -- no warnings found"
 
 
-modules_paths=()
-for dir in $src_dir/*/; do
-    if [ -f "$dir/__init__.py" ]; then
-        modules_paths+=( "$dir" )
-    fi
-done
+example_files=$(find "$examples_dir" -type f -name "*.py")
+tools_files=$(find "$SCRIPT_DIR" -type f -name "*.py")
+src_files=$(find "$src_dir" -type f -name "*.py")
 
-
-all_files=$(find "$examples_dir" -type f -name "*.py")
 
 echo "running pylint3"
 echo "to ignore warning for module put following line on top of file: # pylint: disable=<check_id>"
 echo "to ignore warning for one line put following comment in end of line: # pylint: disable=<check_id>"
-pylint --rcfile=$SCRIPT_DIR/pylint3.config ${modules_paths[@]} $src_dir/*.py $all_files
+# shellcheck disable=SC2086
+pylint --rcfile="$SCRIPT_DIR/pylint3.config" $src_files $example_files $tools_files
 exit_code=$?
 if [ $exit_code -ne 0 ]; then
     exit $exit_code
 fi
 echo "pylint3 -- no warnings found"
+
+
+echo "running bandit"
+echo "to ignore warning for one line put following comment in end of line: # nosec"
+
+## [B301:blacklist] Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.
+## [B403:blacklist] Consider possible security implications associated with pickle module.
+skip_list="B301,B403"
+
+#echo "to ignore warning for one line put following comment in end of line: # nosec
+# shellcheck disable=SC2086
+bandit --skip "${skip_list}" -r "$src_dir" $example_files "$SCRIPT_DIR" -x "$src_dir/test*"
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+echo "bandit -- no warnings found"
+
+
+req_path="$src_dir/requirements.txt"
+if [ -f "$req_path" ]; then
+    echo "running safety"
+    safety check -r "$req_path"
+    exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        exit $exit_code
+    fi
+    echo "safety -- no warnings found"
+else
+    echo "skipping safety - no requirements file found"
+fi
+
+
+## check shell scripts
+
+found_files=$(find "$src_dir/../" -not -path "*/venv/*" -type f -name '*.sh' -o -name '*.bash')
+echo "founs sh files to check: $found_files"
+
+## SC2129: Consider using { cmd1; cmd2; } >> file instead of individual redirects.
+EXCLUDE_LIST="SC2129"
+
+echo "to suppress line warning add before the line: # shellcheck disable=<code>"
+# shellcheck disable=SC2068
+shellcheck -a -x --exclude "$EXCLUDE_LIST" ${found_files[@]}
+echo "shellcheck -- no warnings found"
+
+echo -e "\nall checks completed"

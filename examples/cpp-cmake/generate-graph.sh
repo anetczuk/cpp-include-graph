@@ -9,20 +9,20 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 BUILD_LOG_FILE="$SCRIPT_DIR/build/build_log.txt"
 UNZIP_DIR="$SCRIPT_DIR/build"
+BUILD_DIR="$UNZIP_DIR/builddir"
 
 
 compile_code() {
     CODE_FILE="$SCRIPT_DIR/cmake-3.26.1-tutorial-source.zip"
     SRC_DIR="$UNZIP_DIR/cmake-3.26.1-tutorial-source/Complete"
-    BUILD_DIR="$UNZIP_DIR/build"
     
     
     rm -rf "$UNZIP_DIR"
     
     mkdir -p "$UNZIP_DIR"
-    cd $UNZIP_DIR
+    cd "$UNZIP_DIR"
     
-    unzip -o $CODE_FILE
+    unzip -o "$CODE_FILE"
     
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
@@ -54,10 +54,10 @@ echo "generating full graph"
 GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
 rm -rf "$GRAPH_DIR"
 mkdir -p "$GRAPH_DIR"
-cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$UNZIP_DIR/build" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
+cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
 
 echo "generating reduced graph"
 GRAPH_DIR="$SCRIPT_DIR/include_graph_reduced"
 rm -rf "$GRAPH_DIR"
 mkdir -p "$GRAPH_DIR"
-cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$UNZIP_DIR/build" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$GRAPH_DIR"
+cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$GRAPH_DIR"

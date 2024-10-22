@@ -5,15 +5,14 @@ set -eu
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-SOURCE_DIR=$SCRIPT_DIR/../src
+SOURCE_DIR="$SCRIPT_DIR/../src"
 
 
 timestamp=$(date +%s)
-tmpdir=$(dirname $(mktemp -u))
+tmpdir=$(dirname "$(mktemp -u)")
 
-revcrctmp_dir="$tmpdir/revcrc"
-htmlcov_dir="$revcrctmp_dir/htmlcov.${timestamp}"
-mkdir -p $htmlcov_dir
+htmlcov_dir="$tmpdir/htmlcov.${timestamp}"
+mkdir -p "$htmlcov_dir"
 
 
 #coverage_file=$(mktemp ${tmpdir}/revcrc.coverage.${timestamp}.XXXXXX)
@@ -22,11 +21,13 @@ mkdir -p $htmlcov_dir
 echo "Starting coverage"
 
 
-coverage run --source $SOURCE_DIR --omit */site-packages/* --branch $@
+# creates .coverage in working directory - workaround is to set env variable
+export COVERAGE_FILE=/tmp/.coverage
+
+coverage run --source "$SOURCE_DIR" --omit "*/site-packages/*,*/test*/*" --branch "$@"
 
 # coverage report
-
-coverage html -d $htmlcov_dir
+coverage html -d "$htmlcov_dir"
 
 
 echo ""

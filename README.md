@@ -106,12 +106,13 @@ of log files can be passed as command line argument:
 ## References
 
 - [showgraph](https://github.com/anetczuk/showgraph-py)
-- [Texthon](texthon.chipsforbrain.org/)
+- [Texthon](http://texthon.chipsforbrain.org/)
 
 
 
 ## License
 
+```
 BSD 3-Clause License
 
 Copyright (c) 2022, Arkadiusz Netczuk <dev.arnet@gmail.com>
@@ -140,3 +141,4 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
