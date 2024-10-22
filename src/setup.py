@@ -20,7 +20,10 @@ def read_list( file_path ):
 
 packages_list = find_packages( include=['cppincludegraph', 'cppincludegraph.*'] )
 
-packages_data = { "cppincludegraph": ["*.tmpl"] }
+packages_data = { "cppincludegraph": ["template/*.tmpl"] }
+
+## additional scripts to install
+additional_scripts = ['cppincludegraphdump', 'cppincludegraphgen']
 
 ## every time setup info changes then version number should be increased
 
@@ -32,5 +35,6 @@ setup( name='cppincludegraph',
        license='BSD 3-Clause',
        packages=packages_list,
        package_data=packages_data,
-       install_requires=['texthon', 'showgraph']
+       scripts=additional_scripts,
+       install_requires=['texthon', 'showgraph @ git+https://github.com/anetczuk/showgraph-py#subdirectory=src']
        )

@@ -14,7 +14,7 @@ import collections
 from showgraph.io import read_file
 from showgraph.graphviz import Graph, set_node_style
 
-from cppincludegraph import texttemplate
+from cppincludegraph import texttemplate, logger
 from cppincludegraph.includegraph import GraphNode, IncludeGraph, get_names
 from cppincludegraph.logparser import find_build_logs, read_files_info, read_build_logs
 
@@ -259,6 +259,8 @@ def main():
 
     parser.add_argument( '-lf', '--log_files', nargs='+', action='store', required=False, default="",
                          help="List of build log files" )
+    parser.add_argument( '--build_dir', action='store', required=False, default=".",
+                         help="Build root directory (if other than current work dir)" )
     parser.add_argument( '--log_dir', action='store', required=False, default="",
                          help="Root for search for build log files" )
     parser.add_argument( '--log_name', action='store', required=False, default="",
@@ -275,11 +277,10 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig()
     if args.logall is True:
-        logging.getLogger().setLevel( logging.DEBUG )
+        logger.configure(logLevel=logging.DEBUG)
     else:
-        logging.getLogger().setLevel( logging.INFO )
+        logger.configure(logLevel=logging.INFO)
 
     log_dir  = args.log_dir
     log_name = args.log_name
@@ -293,9 +294,14 @@ def main():
     if len(args.log_files) > 0:
         found_logs.extend( args.log_files )
 
+    build_dir = args.build_dir
+    if not os.path.isdir(build_dir):
+        _LOGGER.error(f"given build directory does not exist: {build_dir}")
+        return 1
+
     _LOGGER.info( "reading build logs: %s", found_logs )
     files_info_dict = read_files_info( args.files_info )
-    graph_list: List[ GraphNode ] = read_build_logs( found_logs, files_info_dict, args.reduce_dirs, args.build_regex )
+    graph_list: List[ GraphNode ] = read_build_logs( found_logs, build_dir, files_info_dict, args.reduce_dirs, args.build_regex )
 
     _LOGGER.info( "building include graph" )
     build_tree: IncludeGraph = IncludeGraph( graph_list, args.rel_names )
@@ -313,3 +319,5 @@ def main():
     if len( args.outdir ) > 0:
         _LOGGER.info( "generating HTML graph" )
         generate_pages( build_tree, args.outdir, files_info_dict )
+
+    _LOGGER.info( "--- completed ---" )

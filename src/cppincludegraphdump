@@ -18,6 +18,8 @@ SEARCH_DIR="$1"
 
 OUT_FILE="$2"
 
+echo "output file: $(realpath -s $OUT_FILE)"
+
 
 APPEND="0"
 if [[ $* == *--append* ]]; then

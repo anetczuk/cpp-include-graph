@@ -13,7 +13,7 @@ from typing import Tuple, List, Dict
 
 from showgraph.io import read_file, read_list
 
-from cppincludegraph.includegraph import GraphNode, NodeData,\
+from cppincludegraph.includegraph import GraphNode, NodeData, \
     get_flat_list_breadth
 
 
@@ -104,7 +104,7 @@ class GraphBuilder():
             for child_parent in child.parents:
                 existing_parent_data = self.getNode( child_parent )
                 if existing_parent_data[1] is True:
-                    raise Exception( "parent should already exist" )
+                    raise RuntimeError( "parent should already exist" )
                 existing_parent = existing_parent_data[0]
                 if new_node in existing_parent.children:
     #                 print( f"..... {new_node.data.name} already added to {existing_parent.data.name}" )
@@ -128,7 +128,7 @@ def find_build_logs( log_dir, log_name ):
     return log_files_list
 
 
-def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, build_regex=None ) -> List[ GraphNode ]:
+def read_build_logs( log_files_list, build_dir, files_info_dict=None, reduce_dirs=None, build_regex=None ) -> List[ GraphNode ]:
     if files_info_dict is None:
         files_info_dict = {}
 
@@ -140,7 +140,7 @@ def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, bui
     for log_path in log_files_list:
         read_counter += 1
         _LOGGER.info( "%s/%s: reading log file: %s", read_counter, read_size, log_path )
-        module_tree_list = read_build_log_file( log_path, build_regex )
+        module_tree_list = read_build_log_file( log_path, build_dir, build_regex )
         if not module_tree_list:
             continue
         package_node = GraphNode()
@@ -155,8 +155,15 @@ def read_build_logs( log_files_list, files_info_dict=None, reduce_dirs=None, bui
     return graph_builder.build_list
 
 
-def read_build_log_file( log_path, build_regex=None ) -> List[ GraphNode ]:
+def read_build_log_file( log_path, build_dir, build_regex=None ) -> List[ GraphNode ]:
     content = read_file( log_path )
+    if not content:
+        _LOGGER.warning( "unable to read file: %s", log_path )
+        return None
+
+    if not build_regex:
+        ## defaulting to make output
+        build_regex = r".*Building \S* object (.*)$"
 
     module_tree_list = []
     level_node_dict: Dict[ int, GraphNode ] = None
@@ -170,10 +177,6 @@ def read_build_log_file( log_path, build_regex=None ) -> List[ GraphNode ]:
         ## print( "line:", line )
 
         recent_obj_file = None
-        if not build_regex:
-            ## defaulting to make output
-            build_regex = r".*Building \S* object (.*)$"
-
         found_obj_file = re.findall( build_regex, line )
         if len(found_obj_file) == 1:
             recent_obj_file = found_obj_file[0]
@@ -184,7 +187,7 @@ def read_build_log_file( log_path, build_regex=None ) -> List[ GraphNode ]:
 
             #recent_obj_file = os.path.realpath( recent_obj_file )
             item_node = GraphNode()
-            item_node.data.name = recent_obj_file
+            item_node.data.name = os.path.join(build_dir, recent_obj_file)
             item_node.data.type = NodeData.NodeType.OBJ_FILE
             level_node_dict    = {}
             level_node_dict[0] = item_node

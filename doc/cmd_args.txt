@@ -7,7 +7,7 @@ usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
 
 generate headers include graph based on compiler output
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -la, --logall         Log all messages
   -lf LOG_FILES [LOG_FILES ...], --log_files LOG_FILES [LOG_FILES ...]
