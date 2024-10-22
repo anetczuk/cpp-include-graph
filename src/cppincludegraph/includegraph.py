@@ -335,6 +335,8 @@ def get_flat_list_breadth(
     nodes_list: List["GraphNode"], ignore_nodes: List[str] = None, ignore_children: List[str] = None
 ) -> List["GraphNode"]:
     ## breadth first order
+    ## ignore_children - items to ignore, usually contains "/usr/" or "/opt/" strings
+
     ret_list = []
     ret_list.extend(nodes_list)
     i = 0
@@ -345,21 +347,24 @@ def get_flat_list_breadth(
         if ignore_children:
             node_name = node.data.name
             if starts_with(node_name, ignore_children):
-                ## add node without children -- node already added, so continue
+                ## skip node
                 continue
 
         if ignore_nodes:
             for child in node.children:
                 if child in ret_list:
+                    ## child node already added, so continue
                     continue
                 child_name = child.data.name
                 if starts_with(child_name, ignore_nodes):
                     ## skip node
                     continue
                 ret_list.append(child)
+
         else:
             for child in node.children:
                 if child in ret_list:
+                    ## child node already added, so continue
                     continue
                 ret_list.append(child)
 
