@@ -7,7 +7,7 @@ set -e
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 
-BUILD_LOG_FILE="$SCRIPT_DIR/build/build_log.txt"
+BUILD_LOG_FILE="$SCRIPT_DIR/build/cmake-tutorial.txt"
 UNZIP_DIR="$SCRIPT_DIR/build"
 BUILD_DIR="$UNZIP_DIR/builddir"
 
@@ -71,7 +71,8 @@ echo "generating reduced graph"
 OUT_DIR="$SCRIPT_DIR/include_graph_reduced"
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
-$GEN_CMD -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$OUT_DIR"
+$GEN_CMD -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" \
+		 --namefromlogfile --nohighlight --outdir "$OUT_DIR"
 
 BROKEN_LINKS=0
 result=$(checklink -r -q "$OUT_DIR/index.html" 2> /dev/null) || BROKEN_LINKS=1

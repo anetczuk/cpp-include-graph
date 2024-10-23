@@ -61,7 +61,7 @@ OBJ_REGEX="^g\+\+.*-o (\S*)$"
 OUT_DIR="$SCRIPT_DIR/include_graph_reduced"
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
-$GEN_CMD -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$OUT_DIR"
+$GEN_CMD -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --markhotpath --outdir "$OUT_DIR"
 
 BROKEN_LINKS=0
 result=$(checklink -r -q "$OUT_DIR/index.html" 2> /dev/null) || BROKEN_LINKS=1
