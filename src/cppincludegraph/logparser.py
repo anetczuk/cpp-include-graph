@@ -143,8 +143,11 @@ def read_build_logs(
         if not module_tree_list:
             continue
         package_node = GraphNode()
-        log_dir = os.path.dirname(log_path)
-        package_node.data.name = os.path.basename(log_dir)
+        if len(log_files_list) > 1:
+            log_dir = os.path.dirname(log_path)
+            package_node.data.name = os.path.basename(log_dir)
+        else:
+            package_node.data.name = os.path.basename(build_dir)
         package_node.data.type = NodeData.NodeType.PACKAGE
         package_node.addChildren(module_tree_list)
         #         raw_tree.append( package_node )
@@ -164,7 +167,7 @@ def read_build_log_file(log_path, build_dir, build_regex=None) -> List[GraphNode
         ## defaulting to make output
         build_regex = r".*Building \S* object (.*)$"
 
-    module_tree_list = []
+    cxx_object_node_list = []
     level_node_dict: Dict[int, GraphNode] = None
 
     line_num = 0
@@ -241,10 +244,10 @@ def read_build_log_file(log_path, build_dir, build_regex=None) -> List[GraphNode
         ## other case
         if level_node_dict is not None:
             root_node = level_node_dict[0]
-            module_tree_list.append(root_node)
+            cxx_object_node_list.append(root_node)
         level_node_dict = None
 
-    return module_tree_list
+    return cxx_object_node_list
 
 
 # def get_after( content, start ):

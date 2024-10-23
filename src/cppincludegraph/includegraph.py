@@ -118,6 +118,8 @@ class GraphNode:
 ##
 class IncludeGraph:
 
+    subdir_mode = False
+
     def __init__(self, packages_list: List[GraphNode] = None, names_base_dir=None):
         if packages_list is None:
             packages_list = []
@@ -162,15 +164,26 @@ class IncludeGraph:
         for package in self.root.children:
             pkg_subdir = prepare_filesystem_name(package.data.label)
             package.data.subdir = pkg_subdir
-            package.data.href = os.path.join(pkg_subdir, "item.html")
+            if self.subdir_mode:
+                package.data.href = os.path.join(pkg_subdir, "index.html")
+            else:
+                package.data.href = pkg_subdir + ".html"
 
             all_children = package.getFlatList(False)
             for child in all_children:
                 child_subdir = prepare_filesystem_name(child.data.label)
                 if not child.data.name.startswith("/"):
-                    child_subdir = os.path.join(pkg_subdir, child_subdir)
+                    if self.subdir_mode:
+                        child_subdir = os.path.join(pkg_subdir, child_subdir)
+                    else:
+                        child_subdir = pkg_subdir
+                else:
+                    pass
                 child.data.subdir = child_subdir
-                child.data.href = os.path.join(child_subdir, "item.html")
+                if self.subdir_mode:
+                    child.data.href = os.path.join(child_subdir, "index.html")
+                else:
+                    child.data.href = child_subdir + ".html"
 
     def _calculateChildren(self):
         calculate_all_children(self.root)

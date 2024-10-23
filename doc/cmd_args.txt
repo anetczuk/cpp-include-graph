@@ -11,7 +11,8 @@ options:
   -h, --help            show this help message and exit
   -la, --logall         Log all messages
   -lf LOG_FILES [LOG_FILES ...], --log_files LOG_FILES [LOG_FILES ...]
-                        List of build log files
+                        List of build log files. Providing multiple log files
+                        is suitable in case of catkin build tool.
   --build_dir BUILD_DIR
                         Build root directory (if other than current work dir)
   --log_dir LOG_DIR     Root for search for build log files

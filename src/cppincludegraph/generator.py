@@ -7,16 +7,14 @@
 
 import os
 import logging
-import argparse
 from typing import List, Set, Dict, Any, Tuple
 import collections
+import io
 
-from showgraph.io import read_file
 from showgraph.graphviz import Graph, set_node_style
 
-from cppincludegraph import texttemplate, logger
+from cppincludegraph import texttemplate
 from cppincludegraph.includegraph import GraphNode, IncludeGraph, get_names
-from cppincludegraph.logparser import find_build_logs, read_files_info, read_build_logs
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,7 +37,9 @@ def generate_pages(build_tree: IncludeGraph, out_dir, files_info_dict=None, conf
 
 ##
 def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir):
-    main_page_link = os.path.join(output_dir, "item.html")
+    pages_subdirs = build_tree.subdir_mode
+
+    main_page_link = os.path.join(output_dir, "index.html")
 
     all_nodes: List[GraphNode] = build_tree.getFlatList()
 
@@ -68,11 +68,19 @@ def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir)
 
         _LOGGER.info("generating dot graph")
         child_dir = os.path.join(output_dir, child_node.data.subdir)
+
+        if pages_subdirs:
+            os.makedirs(child_dir, exist_ok=True)
+            html_out_path = os.path.join(child_dir, "index.html")
+        else:
+            html_out_path = child_dir + ".html"
+            child_dir = os.path.join(child_dir, os.pardir)
+
         child_graph: Graph = generate_dot_graph2(build_tree, [child_node], child_dir)
-        os.makedirs(child_dir, exist_ok=True)
 
         _LOGGER.info("storing dot graph")
-        store_dot_graph(child_graph, child_dir)
+        # store_dot_graph(child_graph, child_dir)
+        svg_content = get_graph_svg(child_graph)
 
         if child_node in package_nodes:
             ## package
@@ -90,24 +98,35 @@ def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir)
                 "item_data": child_node.data,
                 "children_list": child_node.children,
                 "included_list": included_list,
+                "svg_embed_content": svg_content,
             }
         )
-        generate_html_page(child_dir, page_params)
+        generate_html_page(html_out_path, page_params)
 
     ## generate main page
     _LOGGER.info("generating main page")
     graph: Graph = generate_dot_graph2(build_tree, package_nodes, output_dir)
-    store_dot_graph(graph, output_dir)
+    # store_dot_graph(graph, output_dir)
+    svg_content = get_graph_svg(graph)
 
+    _LOGGER.info("generating main graph image")
     out_png = os.path.join(output_dir, "include_tree.gv.png")
     graph.writePNG(out_png)
 
     include_counter = count_packages_includes(package_nodes)
     included_list = get_includes_list(build_tree, object_files_names, include_counter)
 
+    html_out_path = os.path.join(output_dir, "index.html")
     page_params = item_config_dict.copy()
-    page_params.update({"root_dir": output_dir, "children_list": package_nodes, "included_list": included_list})
-    generate_html_page(output_dir, page_params)
+    page_params.update(
+        {
+            "root_dir": output_dir,
+            "children_list": package_nodes,
+            "included_list": included_list,
+            "svg_embed_content": svg_content,
+        }
+    )
+    generate_html_page(html_out_path, page_params)
 
 
 def get_includes_list(build_tree, object_files_names, include_counter):
@@ -132,26 +151,26 @@ def count_packages_includes(package_nodes_list: List[GraphNode]):
 
 
 ##
-def generate_html_page(page_dir, page_params):
-    svg_path = os.path.join(page_dir, "include_tree.gv.svg")
-    svg_content = read_file(svg_path)
-    os.remove(svg_path)  ## remove file -- content embedded into HTML
+def generate_html_page(out_path, page_params):
+    # svg_path = os.path.join(page_dir, "include_tree.gv.svg")
+    # svg_content = read_file(svg_path)
+    # os.remove(svg_path)  ## remove file -- content embedded into HTML
+
+    page_dir = os.path.dirname(out_path)
 
     ## prepare input for template
     page_params.update(
         {
             "page_dir": page_dir,
             "body_color": "#bbbbbb",
-            "svg_name": "include_tree.gv.svg",
-            "svg_embed_content": svg_content,
+            # "svg_name": "include_tree.gv.svg",
         }
     )
 
     template_path = os.path.join(SCRIPT_DIR, "template", "include_tree_page.html.tmpl")
-    html_out_path = os.path.join(page_dir, "item.html")
 
-    _LOGGER.info("writing page: file://%s", html_out_path)
-    texttemplate.generate(template_path, html_out_path, INPUT_DICT=page_params)
+    _LOGGER.info("writing page: file://%s", out_path)
+    texttemplate.generate(template_path, out_path, INPUT_DICT=page_params)
 
 
 def generate_dot_graph2(build_tree: IncludeGraph, nodes_list: List[GraphNode], base_dir) -> Graph:
@@ -243,105 +262,9 @@ def store_dot_graph(graph: Graph, page_dir):
     graph.write(out_svg, file_format="svg")
 
 
-## ============================================================================
-## ============================================================================
-## ============================================================================
-
-
-def main():
-    parser = argparse.ArgumentParser(description="generate headers include graph based on compiler output")
-    parser.add_argument("-la", "--logall", action="store_true", help="Log all messages")
-
-    ## =================================================
-
-    parser.add_argument(
-        "-lf", "--log_files", nargs="+", action="store", required=False, default="", help="List of build log files"
-    )
-    parser.add_argument(
-        "--build_dir",
-        action="store",
-        required=False,
-        default=".",
-        help="Build root directory (if other than current work dir)",
-    )
-    parser.add_argument(
-        "--log_dir", action="store", required=False, default="", help="Root for search for build log files"
-    )
-    parser.add_argument(
-        "--log_name", action="store", required=False, default="", help="Name of build log file to search for"
-    )
-    parser.add_argument(
-        "--build_regex",
-        action="store",
-        required=False,
-        default="",
-        help=r"Build object regex. If not given then '.*Building \S* object (.*)$' is used.",
-    )
-    parser.add_argument(
-        "-rd",
-        "--reduce_dirs",
-        nargs="+",
-        action="store",
-        required=False,
-        default="",
-        help="List of headers directories to reduce",
-    )
-    parser.add_argument("--rel_names", action="store", required=False, default="", help="Reduce prefix of all names")
-    parser.add_argument(
-        "--files_info",
-        action="store",
-        required=False,
-        default="",
-        help="Files information (file can be generated using 'cppincludegraphdump' script)",
-    )
-    parser.add_argument("--outdir", action="store", required=False, default="", help="Output directory")
-
-    args = parser.parse_args()
-
-    if args.logall is True:
-        logger.configure(logLevel=logging.DEBUG)
-    else:
-        logger.configure(logLevel=logging.INFO)
-
-    log_dir = args.log_dir
-    log_name = args.log_name
-
-    if len(log_dir) == 0:
-        log_dir = None
-    if len(log_name) == 0:
-        log_name = None
-
-    found_logs = find_build_logs(log_dir, log_name)
-    if len(args.log_files) > 0:
-        found_logs.extend(args.log_files)
-
-    build_dir = args.build_dir
-    if not os.path.isdir(build_dir):
-        _LOGGER.error("given build directory does not exist: %s", build_dir)
-        return 1
-
-    _LOGGER.info("reading build logs: %s", found_logs)
-    files_info_dict = read_files_info(args.files_info)
-    graph_list: List[GraphNode] = read_build_logs(
-        found_logs, build_dir, files_info_dict, args.reduce_dirs, args.build_regex
-    )
-
-    _LOGGER.info("building include graph")
-    build_tree: IncludeGraph = IncludeGraph(graph_list, args.rel_names)
-    build_tree.setRootDir(args.outdir)
-
-    #     ## pprint.pprint( build_tree )
-    #     print_graph( build_tree.root.children )
-
-    #     out_stats = os.path.join( args.outdir, "most_common.txt" )
-    #     print_stats( build_tree, out_stats )
-
-    ##
-    ## generate HTML data
-    ##
-    if len(args.outdir) > 0:
-        _LOGGER.info("generating HTML graph")
-        generate_pages(build_tree, args.outdir, files_info_dict)
-
-    _LOGGER.info("--- completed ---")
-    return 0
+def get_graph_svg(graph: Graph):
+    with io.BytesIO() as buffer:
+        graph.write(buffer, file_format="svg")
+        contents = buffer.getvalue()
+        contents_str = contents.decode("utf-8")
+        return contents_str

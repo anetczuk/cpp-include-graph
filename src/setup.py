@@ -29,7 +29,7 @@ additional_scripts = ["cppincludegraphdump", "cppincludegraphgen"]
 
 setup(
     name="cppincludegraph",
-    version="2.0.1",
+    version="2.0.2",
     description="headers include graph generator for C++ projects",
     url="https://github.com/anetczuk/cpp-include-graph",
     author="anetczuk",

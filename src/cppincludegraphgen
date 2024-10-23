@@ -7,7 +7,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-from cppincludegraph.generator import main
+from cppincludegraph.main import main
 
 
 # _LOGGER = logging.getLogger(__name__)
