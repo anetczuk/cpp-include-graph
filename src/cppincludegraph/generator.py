@@ -25,18 +25,25 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ## ===================================================================
 
 
-def generate_pages(build_tree: IncludeGraph, out_dir, files_info_dict=None, config_params_dict=None):
+def generate_pages(
+    build_tree: IncludeGraph,
+    out_dir,
+    files_info_dict=None,
+    config_params_dict=None,
+    no_highlight=False,
+    mark_hotpath=False,
+):
     if files_info_dict is None:
         files_info_dict = {}
     if config_params_dict is None:
         config_params_dict = {}
 
     params_dict: Dict[str, Any] = {}
-    generate_graph_pages(build_tree, params_dict, out_dir)
+    generate_graph_pages(build_tree, params_dict, no_highlight, mark_hotpath, out_dir)
 
 
 ##
-def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir):
+def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, no_highlight, mark_hotpath, output_dir):
     pages_subdirs = build_tree.subdir_mode
 
     main_page_link = os.path.join(output_dir, "index.html")
@@ -76,7 +83,7 @@ def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir)
             html_out_path = child_dir + ".html"
             child_dir = os.path.join(child_dir, os.pardir)
 
-        child_graph: Graph = generate_dot_graph2(build_tree, [child_node], child_dir)
+        child_graph: Graph = generate_dot_graph2(build_tree, [child_node], child_dir, no_highlight, mark_hotpath)
 
         _LOGGER.info("storing dot graph")
         # store_dot_graph(child_graph, child_dir)
@@ -105,7 +112,7 @@ def generate_graph_pages(build_tree: IncludeGraph, item_config_dict, output_dir)
 
     ## generate main page
     _LOGGER.info("generating main page")
-    graph: Graph = generate_dot_graph2(build_tree, package_nodes, output_dir)
+    graph: Graph = generate_dot_graph2(build_tree, package_nodes, output_dir, no_highlight, mark_hotpath)
     # store_dot_graph(graph, output_dir)
     svg_content = get_graph_svg(graph)
 
@@ -173,26 +180,33 @@ def generate_html_page(out_path, page_params):
     texttemplate.generate(template_path, out_path, INPUT_DICT=page_params)
 
 
-def generate_dot_graph2(build_tree: IncludeGraph, nodes_list: List[GraphNode], base_dir) -> Graph:
+def generate_dot_graph2(
+    build_tree: IncludeGraph, nodes_list: List[GraphNode], base_dir, no_highlight=False, mark_hotpath=False
+) -> Graph:
     active_nodes = build_tree.getConnectedNodes(nodes_list)
     graph: Graph = generate_base_graph(active_nodes, base_dir)
 
-    include_nodes = build_tree.findMaxIncludeNodes(nodes_list)
-
-    ## tree_node: GraphNode
-    for tree_node in include_nodes:
-        item_label = tree_node.data.label
-        graph_node = graph.getNode(item_label)
-        if not graph_node:
-            continue
-
-        if tree_node not in include_nodes:
-            continue
-        style = {"style": "filled", "fillcolor": "hotpink1"}
-        set_node_style(graph_node, style)
-
     top_nodes = graph.getNodesTop()
     graph.setNodesRank(top_nodes, "min")
+    if no_highlight:
+        # highlight disabled - do nothing
+        return graph
+
+    if mark_hotpath:
+        include_nodes = build_tree.findMaxIncludeNodes(nodes_list)
+
+        ## tree_node: GraphNode
+        for tree_node in include_nodes:
+            item_label = tree_node.data.label
+            graph_node = graph.getNode(item_label)
+            if not graph_node:
+                continue
+
+            if tree_node not in include_nodes:
+                continue
+            style = {"style": "filled", "fillcolor": "hotpink1"}
+            set_node_style(graph_node, style)
+
     for graph_node in top_nodes:
         style = {"style": "filled", "fillcolor": "yellow"}
         set_node_style(graph_node, style)

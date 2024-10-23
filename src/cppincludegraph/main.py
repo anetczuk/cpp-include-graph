@@ -76,6 +76,19 @@ def main():
         default="",
         help="Files information (file can be generated using 'cppincludegraphdump' script)",
     )
+    parser.add_argument(
+        "--nohighlight", action="store_true", required=False, default=False, help="Should node highlight be disabled?"
+    )
+    parser.add_argument(
+        "--markhotpath", action="store_true", required=False, default=False, help="Should hot path be painted?"
+    )
+    parser.add_argument(
+        "--namefromlogfile",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Should use package name from log file name?",
+    )
     parser.add_argument("--outdir", action="store", required=False, default="", help="Output directory")
 
     args = parser.parse_args()
@@ -106,7 +119,7 @@ def main():
     _LOGGER.info("reading build logs: %s", found_logs)
     files_info_dict = read_files_info(args.files_info)
     graph_list: List[GraphNode] = read_build_logs(
-        found_logs, build_dir, files_info_dict, args.reduce_dirs, args.build_regex
+        found_logs, build_dir, files_info_dict, args.reduce_dirs, args.build_regex, args.namefromlogfile
     )
 
     _LOGGER.info("building include graph")
@@ -125,7 +138,9 @@ def main():
     ##
     if len(args.outdir) > 0:
         _LOGGER.info("generating HTML graph")
-        generate_pages(build_tree, args.outdir, files_info_dict)
+        generate_pages(
+            build_tree, args.outdir, files_info_dict, no_highlight=args.nohighlight, mark_hotpath=args.markhotpath
+        )
 
     _LOGGER.info("--- completed ---")
     return 0

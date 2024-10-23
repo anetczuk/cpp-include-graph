@@ -61,9 +61,9 @@ In `examples/cpp-makefile` there is example of include tree generated based on M
 
 Generator is executed with following command for reduced and full graph respectively:
 ```
-cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --markhotpath --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
 
-cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --outdir include_graph_full
+cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --markhotpath --outdir include_graph_full
 ```
 
 Note that there is `--build_regex` passed through command line. It highly depends on configuration of `Makefile` file and it's output to stdout.
@@ -78,9 +78,9 @@ In `examples/cpp-cmake` there is example of include tree generated based on CMak
 
 Generator is executed with following command for reduced and full graph respectively:
 ```
-cppincludegraphgen -lf build_log.txt --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
+cppincludegraphgen -lf cmake-tutorial.txt --namefromlogfile --nohighlight --reduce_dirs "/opt" "/usr" --outdir include_graph_reduced
 
-cppincludegraphgen -lf build_log.txt --outdir include_graph_full
+cppincludegraphgen -lf cmake-tutorial.txt --namefromlogfile --nohighlight --outdir include_graph_full
 ```
 
 [![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)

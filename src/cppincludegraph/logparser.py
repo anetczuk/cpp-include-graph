@@ -126,7 +126,7 @@ def find_build_logs(log_dir, log_name):
 
 
 def read_build_logs(
-    log_files_list, build_dir, files_info_dict=None, reduce_dirs=None, build_regex=None
+    log_files_list, build_dir, files_info_dict=None, reduce_dirs=None, build_regex=None, name_from_log_file=False
 ) -> List[GraphNode]:
     if files_info_dict is None:
         files_info_dict = {}
@@ -143,11 +143,16 @@ def read_build_logs(
         if not module_tree_list:
             continue
         package_node = GraphNode()
-        if len(log_files_list) > 1:
-            log_dir = os.path.dirname(log_path)
-            package_node.data.name = os.path.basename(log_dir)
+        if name_from_log_file:
+            log_base = os.path.basename(log_path)
+            log_base = os.path.splitext(log_base)[0]
+            package_node.data.name = log_base
         else:
-            package_node.data.name = os.path.basename(build_dir)
+            if len(log_files_list) > 1:
+                log_dir = os.path.dirname(log_path)
+                package_node.data.name = os.path.basename(log_dir)
+            else:
+                package_node.data.name = os.path.basename(build_dir)
         package_node.data.type = NodeData.NodeType.PACKAGE
         package_node.addChildren(module_tree_list)
         #         raw_tree.append( package_node )

@@ -3,6 +3,7 @@ usage: cppincludegraphgen [-h] [-la] [-lf LOG_FILES [LOG_FILES ...]]
                           [--log_name LOG_NAME] [--build_regex BUILD_REGEX]
                           [-rd REDUCE_DIRS [REDUCE_DIRS ...]]
                           [--rel_names REL_NAMES] [--files_info FILES_INFO]
+                          [--nohighlight] [--markhotpath] [--namefromlogfile]
                           [--outdir OUTDIR]
 
 generate headers include graph based on compiler output
@@ -27,4 +28,7 @@ options:
   --files_info FILES_INFO
                         Files information (file can be generated using
                         'cppincludegraphdump' script)
+  --nohighlight         Should node highlight be disabled?
+  --markhotpath         Should hot path be painted?
+  --namefromlogfile     Should use package name from log file name?
   --outdir OUTDIR       Output directory
