@@ -69,7 +69,6 @@ cppincludegraphgen -lf build_log.txt --build_regex "^g\+\+.*-o (\S*)$" --outdir 
 Note that there is `--build_regex` passed through command line. It highly depends on configuration of `Makefile` file and it's output to stdout.
 
 [![include reduced graph](examples/cpp-makefile/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-makefile/include_graph_reduced/include_tree.gv.png)
-[![include full graph](examples/cpp-makefile/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-makefile/include_graph_full/include_tree.gv.png)
 
 
 
@@ -85,7 +84,6 @@ cppincludegraphgen -lf build_log.txt --outdir include_graph_full
 ```
 
 [![include reduced graph](examples/cpp-cmake/include_graph_reduced/include_tree.gv-small.png "include reduced graph")](examples/cpp-cmake/include_graph_reduced/include_tree.gv.png)
-[![include full graph](examples/cpp-cmake/include_graph_full/include_tree.gv-small.png "include full graph")](examples/cpp-cmake/include_graph_full/include_tree.gv.png)
 
 
 

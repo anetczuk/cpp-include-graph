@@ -25,7 +25,7 @@ echo "running tests under venv"
 
 if [ -f "$SCRIPT_DIR/examples/generate-all.sh" ]; then
 	echo "generating examples results"
-    "$SCRIPT_DIR"/examples/generate-all.sh
+    "$SCRIPT_DIR"/examples/generate-all.sh --venv
 fi
 
 echo "checking code"

@@ -36,18 +36,39 @@ compile_code() {
 compile_code
 
 
+GEN_CMD="cppincludegraphgen"
+if [[ $* == *--venv* ]]; then
+	## do nothing - use standard executable (installed)
+	:
+else
+	## set path to local executable
+	CPPIG_SRC_DIR="$SCRIPT_DIR/../../src"
+	GEN_CMD="$CPPIG_SRC_DIR/cppincludegraphgen"
+fi
+
+
 ##
 ## generate include graph
 ##
 
 OBJ_REGEX="^g\+\+.*-o (\S*)$"
 
-# GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
-# rm -rf "$GRAPH_DIR"
-# mkdir -p "$GRAPH_DIR"
-# cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
+# OUT_DIR="$SCRIPT_DIR/include_graph_full"
+# rm -rf "$OUT_DIR"
+# mkdir -p "$OUT_DIR"
+# $GEN_CMD -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --outdir "$OUT_DIR"
 
-GRAPH_DIR="$SCRIPT_DIR/include_graph_reduced"
-rm -rf "$GRAPH_DIR"
-mkdir -p "$GRAPH_DIR"
-cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$GRAPH_DIR"
+OUT_DIR="$SCRIPT_DIR/include_graph_reduced"
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_DIR"
+$GEN_CMD -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --reduce_dirs "/opt" "/usr" --outdir "$OUT_DIR"
+
+BROKEN_LINKS=0
+result=$(checklink -r -q "$OUT_DIR/index.html" 2> /dev/null) || BROKEN_LINKS=1
+if [[ "$result" != "" || $BROKEN_LINKS -ne 0 ]]; then
+	echo "broken links found:"
+	echo "$result"
+	exit 1
+fi
+# else: # empty string - no errors
+echo "no broken links found"

@@ -17,3 +17,6 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 else
     pip3 install --user "$SCRIPT_DIR" 
 fi
+
+echo "Removing $SCRIPT_DIR/build direcotry"
+rm -r "$SCRIPT_DIR/build"
