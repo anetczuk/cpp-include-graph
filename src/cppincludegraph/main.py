@@ -101,6 +101,7 @@ def main():
     if not os.path.isdir(build_dir):
         _LOGGER.error("given build directory does not exist: %s", build_dir)
         return 1
+    build_dir = os.path.realpath(build_dir)
 
     _LOGGER.info("reading build logs: %s", found_logs)
     files_info_dict = read_files_info(args.files_info)
