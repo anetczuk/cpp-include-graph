@@ -42,10 +42,10 @@ compile_code
 
 OBJ_REGEX="^g\+\+.*-o (\S*)$"
 
-GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
-rm -rf "$GRAPH_DIR"
-mkdir -p "$GRAPH_DIR"
-cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
+# GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
+# rm -rf "$GRAPH_DIR"
+# mkdir -p "$GRAPH_DIR"
+# cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_regex "$OBJ_REGEX" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
 
 GRAPH_DIR="$SCRIPT_DIR/include_graph_reduced"
 rm -rf "$GRAPH_DIR"

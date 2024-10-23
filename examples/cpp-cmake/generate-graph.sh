@@ -50,11 +50,11 @@ compile_code
 # intentionally change directory from build dir to check relative paths
 cd "$SCRIPT_DIR"
 
-echo "generating full graph"
-GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
-rm -rf "$GRAPH_DIR"
-mkdir -p "$GRAPH_DIR"
-cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
+# echo "generating full graph"
+# GRAPH_DIR="$SCRIPT_DIR/include_graph_full"
+# rm -rf "$GRAPH_DIR"
+# mkdir -p "$GRAPH_DIR"
+# cppincludegraphgen -lf "$BUILD_LOG_FILE" --build_dir "$BUILD_DIR" --rel_names "$UNZIP_DIR" --outdir "$GRAPH_DIR"
 
 echo "generating reduced graph"
 GRAPH_DIR="$SCRIPT_DIR/include_graph_reduced"
